@@ -11,3 +11,7 @@
 2. 提交源代码
 
 3. 要求结果能用可视的方法表示出来（图或者采用数据结构中学过的方法）
+
+# Notes
+
+1. The ANSI C Lex & Yacc files are taken from ![ANSI C grammar, Lex specification](http://www.quut.com/c/ANSI-C-grammar-l.html) and ![ANSI C Yacc grammar](http://www.quut.com/c/ANSI-C-grammar-y-2011.html).
