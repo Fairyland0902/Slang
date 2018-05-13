@@ -14,4 +14,4 @@
 
 # Notes
 
-1. The ANSI C Lex & Yacc files are taken from ![ANSI C grammar, Lex specification](http://www.quut.com/c/ANSI-C-grammar-l.html) and ![ANSI C Yacc grammar](http://www.quut.com/c/ANSI-C-grammar-y-2011.html).
+1. The ANSI C Lex & Yacc files are taken from [ANSI C grammar, Lex specification](http://www.quut.com/c/ANSI-C-grammar-l.html) and [ANSI C Yacc grammar](http://www.quut.com/c/ANSI-C-grammar-y-2011.html).
