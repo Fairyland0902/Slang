@@ -22,8 +22,9 @@ ES  (\\(['"\?\\abfnrtv]|[0-7]{1,3}|x[a-fA-F0-9]+))
 WS  [ \t\v\n\f]
 
 %{
-#include <stdio.h>
-#include "y.tab.h"
+#include <cstdio>
+#include <iostream>
+#include "parser.h"
 
 extern void yyerror(const char *);  /* prints grammar violation message */
 
@@ -34,6 +35,8 @@ extern int sym_type(const char *);  /* returns type from symbol table */
 static void comment(void);
 static int check_type(void);
 %}
+
+%option debug
 
 %%
 "/*"                                    { comment(); }
@@ -160,20 +163,16 @@ int yywrap(void)        /* called at end of input */
 
 static void comment(void)
 {
-    int c;
 
-    while ((c = input()) != 0)
-        if (c == '*')
-        {
-            while ((c = input()) == '*')
-                ;
+	char c, prev = 0;
 
-            if (c == '/')
-                return;
+	while (std::cin >> c)      /* (EOF maps to 0) */
+	{
+		if (c == '/' && prev == '*')
+			return;
+		prev = c;
+	}
 
-            if (c == 0)
-                break;
-        }
     yyerror("unterminated comment");
 }
 
