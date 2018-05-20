@@ -34,6 +34,30 @@ extern int sym_type(const char *);  /* returns type from symbol table */
 
 static void comment(void);
 static int check_type(void);
+
+/*
+ * The stream the lexer will read from.
+ * Declare it as extern.
+ */
+extern std::istream* lexer_ins_;
+
+/*
+ * Define YY_INPUT to get from lexer_ins_
+ * This definition mirrors the functionality of the default
+ * interactive YY_INPUT
+ */
+#define YY_INPUT(buf, result, max_size)  \
+  result = 0; \
+  while (1) { \
+    int c = lexer_ins_->get(); \
+    if (lexer_ins_->eof()) { \
+      break; \
+    } \
+    buf[result++] = c; \
+    if (result == max_size || c == '\n') { \
+      break; \
+    } \
+  }
 %}
 
 %option debug

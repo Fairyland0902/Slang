@@ -16,5 +16,6 @@ set(SOURCE_FILES
         main.cc
         ${BISON_MyParser_OUTPUTS}
         ${FLEX_MyScanner_OUTPUTS}
-        )
+        driver.h
+        driver.cc)
 add_executable(Slang ${SOURCE_FILES})
