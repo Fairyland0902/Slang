@@ -5,16 +5,18 @@
 #include "driver.h"
 
 extern int yyparse();
-std::istream* lexer_ins_;
 
-Driver::~Driver()=default;
+std::istream *lexer_ins_;
+
+Driver::~Driver() = default;
 
 void Driver::parse(std::string filename)
 {
     assert(!filename.empty());
 
     std::ifstream infile(filename);
-    if(!infile.good()) {
+    if (!infile.good())
+    {
         exit(EXIT_FAILURE);
     }
     parse_helper(infile);
@@ -22,7 +24,8 @@ void Driver::parse(std::string filename)
 
 void Driver::parse(std::istream &iss)
 {
-    if(!iss.good() && iss.eof()) {
+    if (!iss.good() && iss.eof())
+    {
         return;
     }
     parse_helper(iss);
@@ -34,7 +37,8 @@ void Driver::parse_helper(std::istream &stream)
 
     lexer_ins_ = &stream;
 
-    if(yyparse() != accept) {
+    if (yyparse() != accept)
+    {
         std::cerr << "parse failed" << std::endl;
     }
 }
