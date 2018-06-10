@@ -4,10 +4,11 @@
 	AST_Block* progBlock;
 
 	extern int yylex();
-	void yyerror(const char* s)
+	extern void yyerror(const char* s);
+	/*void yyerror(const char* s)
 	{
 		printf("Error: %s\n", s);
-	}
+	}*/
 %}
 
 %union
@@ -136,27 +137,26 @@ var_declaration : typename id {
 					 $$ = new AST_ArrayInitialization(make_shared<AST_VariableDeclaration>(shared_ptr<AST_Identifier>($1), 
 					 																	   shared_ptr<AST_Identifier>($2), 
 					 																	   nullptr), 
-					 								  shared_ptr<ExpressionList>($5));
+					 								  shared_ptr<AST_ExpressionList>($5));
 				 }
 				 ;
 
 func_declaration : typename id LEFT_PAREN func_declaration_args RIGHT_PAREN block 
 					{ $$ = new AST_FunctionDeclaration(shared_ptr<AST_Identifier>($1), 
 													   shared_ptr<AST_Identifier>($2), 
-													   shared_ptr<VariableList>($4), 
+													   shared_ptr<AST_VariableList>($4), 
 													   shared_ptr<AST_Block>($6));  
 					}
 					| EXTERN typename id LEFT_PAREN func_declaration_args RIGHT_PAREN 
 					{ $$ = new AST_FunctionDeclaration(shared_ptr<AST_Identifier>($2), 
 													   shared_ptr<AST_Identifier>($3), 
-													   shared_ptr<VariableList>($5), 
-													   nullptr, 
-													   true); 
+													   shared_ptr<AST_VariableList>($5), 
+													   nullptr); 
 					}
 
-func_declaration_args : /* none here */ { $$ = new VariableList(); }
+func_declaration_args : /* none here */ { $$ = new AST_VariableList(); }
 					 | var_declaration { 
-					   $$ = new VariableList(); 
+					   $$ = new AST_VariableList(); 
 					   $$->push_back(shared_ptr<AST_VariableDeclaration>($<var_declaration>1)); 
 					 }
 					 | func_declaration_args COMMA var_declaration 
@@ -177,7 +177,7 @@ exp : 	assign { $$ = $1; }
 	 | numeric
 	 | id LEFT_PAREN call_args RIGHT_PAREN { 
 	 		$$ = new AST_MethodCall(shared_ptr<AST_Identifier>($1), 
-	 								shared_ptr<ExpressionList>($3)); 
+	 								shared_ptr<AST_ExpressionList>($3)); 
 	 	}
 	 | id { $<id>$ = $1; }
 	 | exp comparison exp { 
@@ -222,7 +222,7 @@ exp : 	assign { $$ = $1; }
 array_index : id LEFT_BRACKET exp RIGHT_BRACKET 
 			{ $$ = new AST_ArrayIndex(shared_ptr<AST_Identifier>($1), shared_ptr<AST_Expression>($3)); }
 			| array_index LEFT_BRACKET exp RIGHT_BRACKET { 	
-				$1->expessions->push_back(shared_ptr<AST_Expression>($3));
+				$1->expressions->push_back(shared_ptr<AST_Expression>($3));
 				$$ = $1;
 			}
 			;
@@ -239,9 +239,9 @@ assign : id ASSIGN_EQUAL exp {
 				$$ = new AST_StructAssignment(member, shared_ptr<AST_Expression>($5)); 
 			}
 
-call_args : /* none here */ { $$ = new ExpressionList(); }
+call_args : /* none here */ { $$ = new AST_ExpressionList(); }
 			| exp { 
-				$$ = new ExpressionList(); 
+				$$ = new AST_ExpressionList(); 
 				$$->push_back(shared_ptr<AST_Expression>($1)); 
 			}
 			| call_args COMMA exp { $1->push_back(shared_ptr<AST_Expression>($3)); }
@@ -277,12 +277,12 @@ while_stm : WHILE LEFT_PAREN exp RIGHT_PAREN block {
 		}
 
 struct_declaration : STRUCT id LEFT_BRACE struct_members RIGHT_BRACE {
-			$$ = new AST_StructDeclaration(shared_ptr<AST_Identifier>($2), shared_ptr<VariableList>($4)); 
+			$$ = new AST_StructDeclaration(shared_ptr<AST_Identifier>($2), shared_ptr<AST_VariableList>($4)); 
 		}
 
-struct_members : /* none here */ { $$ = new VariableList(); }
+struct_members : /* none here */ { $$ = new AST_VariableList(); }
 				| var_declaration { 
-					$$ = new VariableList(); 
+					$$ = new AST_VariableList(); 
 					$$->push_back(shared_ptr<AST_VariableDeclaration>($<var_declaration>1)); 
 				}
 				| struct_members var_declaration { 

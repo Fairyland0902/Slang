@@ -11,10 +11,10 @@ find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-BISON_TARGET(MyInterpreter interpreter.y ${CMAKE_CURRENT_BINARY_DIR}/interpreter.cc DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/interpreter.h)
 BISON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cc DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser.h)
 FLEX_TARGET(MyScanner scanner.l ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc)
-ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser MyASTTree)
+BISON_TARGET(MyInterpreter interpreter.y ${CMAKE_CURRENT_BINARY_DIR}/interpreter.cc DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/interpreter.h)
+ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser MyInterpreter)
 
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -25,8 +25,15 @@ set(SOURCE_FILES
         main.cc
         ${BISON_MyParser_OUTPUTS}
         ${FLEX_MyScanner_OUTPUTS}
+        ${BISON_MyInterpreter_OUTPUTS}
         driver.h
-        driver.cc absyn.h)
+        driver.cc 
+        absyn.h
+        IR.h
+        IR.cpp
+        type.h
+        type.cpp)
+
 add_executable(Slang ${SOURCE_FILES})
 
 llvm_map_components_to_libnames(llvm_libs support core irreader mcjit native)
