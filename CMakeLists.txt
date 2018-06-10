@@ -11,7 +11,7 @@ find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-BISON_TARGET(MyASTTree ASTTree.y ${CMAKE_CURRENT_BINARY_DIR}/ASTTree.cc DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/ASTTree.h)
+BISON_TARGET(MyInterpreter interpreter.y ${CMAKE_CURRENT_BINARY_DIR}/interpreter.cc DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/interpreter.h)
 BISON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cc DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser.h)
 FLEX_TARGET(MyScanner scanner.l ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc)
 ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser MyASTTree)
@@ -26,7 +26,7 @@ set(SOURCE_FILES
         ${BISON_MyParser_OUTPUTS}
         ${FLEX_MyScanner_OUTPUTS}
         driver.h
-        driver.cc ASTNodes.h)
+        driver.cc absyn.h)
 add_executable(Slang ${SOURCE_FILES})
 
 llvm_map_components_to_libnames(llvm_libs support core irreader mcjit native)
