@@ -28,12 +28,10 @@ WS  [ \t\v\n\f]
 
 extern void yyerror(const char *);  /* prints grammar violation message */
 
-extern int sym_type(const char *);  /* returns type from symbol table */
-
-#define sym_type(identifier) IDENTIFIER /* with no symbol table, fake it */
+#define SAVE_TOKEN yylval.string = new std::string(yytext)
+#define TOKEN(t) ( yylval.token = t)
 
 static void comment(void);
-static int check_type(void);
 
 /*
  * The stream the lexer will read from.
@@ -63,120 +61,117 @@ extern std::istream* lexer_ins_;
 %option debug
 
 %%
-"/*"                                    { comment(); }
-"//".*                                    { /* consume //-comment */ }
+"/*"                                { comment(); }
+"//".*                              { /* consume //-comment */ }
 
-"auto"					{ return(AUTO); }
-"break"					{ return(BREAK); }
-"case"					{ return(CASE); }
-"char"					{ return(CHAR); }
-"const"					{ return(CONST); }
-"continue"				{ return(CONTINUE); }
-"default"				{ return(DEFAULT); }
-"do"					{ return(DO); }
-"double"				{ return(DOUBLE); }
-"else"					{ return(ELSE); }
-"enum"					{ return(ENUM); }
-"extern"				{ return(EXTERN); }
-"float"					{ return(FLOAT); }
-"for"					{ return(FOR); }
-"goto"					{ return(GOTO); }
-"if"					{ return(IF); }
-"inline"				{ return(INLINE); }
-"int"					{ return(INT); }
-"long"					{ return(LONG); }
-"register"				{ return(REGISTER); }
-"restrict"				{ return(RESTRICT); }
-"return"				{ return(RETURN); }
-"short"					{ return(SHORT); }
-"signed"				{ return(SIGNED); }
-"sizeof"				{ return(SIZEOF); }
-"static"				{ return(STATIC); }
-"struct"				{ return(STRUCT); }
-"switch"				{ return(SWITCH); }
-"typedef"				{ return(TYPEDEF); }
-"union"					{ return(UNION); }
-"unsigned"				{ return(UNSIGNED); }
-"void"					{ return(VOID); }
-"volatile"				{ return(VOLATILE); }
-"while"					{ return(WHILE); }
-"_Alignas"                              { return ALIGNAS; }
-"_Alignof"                              { return ALIGNOF; }
-"_Atomic"                               { return ATOMIC; }
-"_Bool"                                 { return BOOL; }
-"_Complex"                              { return COMPLEX; }
-"_Generic"                              { return GENERIC; }
-"_Imaginary"                            { return IMAGINARY; }
-"_Noreturn"                             { return NORETURN; }
-"_Static_assert"                        { return STATIC_ASSERT; }
-"_Thread_local"                         { return THREAD_LOCAL; }
-"__func__"                              { return FUNC_NAME; }
+"auto"                              { return TOKEN(AUTO); }
+"break"                             { return TOKEN(BREAK); }
+"case"                              { return TOKEN(CASE); }
+"char"                              { SAVE_TOKEN; return (CHAR); }
+"const"                             { SAVE_TOKEN; return (CONST); }
+"continue"                          { return TOKEN(CONTINUE); }
+"default"                           { return TOKEN(DEFAULT); }
+"do"                                { return TOKEN(DO); }
+"double"                            { SAVE_TOKEN; return (DOUBLE); }
+"else"                              { return TOKEN(ELSE); }
+"enum"                              { return TOKEN(ENUM); }
+"extern"                            { SAVE_TOKEN; return (EXTERN); }
+"float"                             { SAVE_TOKEN; return(FLOAT); }
+"for"                               { return TOKEN(FOR); }
+"goto"                              { return TOKEN(GOTO); }
+"if"                                { return TOKEN(IF); }
+"inline"                            { SAVE_TOKEN; return (INLINE); }
+"int"                               { SAVE_TOKEN; return (INT); }
+"long"                              { SAVE_TOKEN; return (LONG); }
+"register"                          { SAVE_TOKEN; return (REGISTER); }
+"restrict"                          { SAVE_TOKEN; return (RESTRICT); }
+"return"                            { return TOKEN(RETURN); }
+"short"                             { SAVE_TOKEN; return (SHORT); }
+"signed"                            { SAVE_TOKEN; return (SIGNED); }
+"sizeof"                            { return TOKEN(SIZEOF); }
+"static"                            { SAVE_TOKEN; return(STATIC); }
+"struct"                            { return TOKEN(STRUCT); }
+"switch"                            { return TOKEN(SWITCH); }
+"typedef"                           { SAVE_TOKEN; return (TYPEDEF); }
+"union"                             { return TOKEN(UNION); }
+"unsigned"                          { SAVE_TOKEN; return (UNSIGNED); }
+"void"                              { SAVE_TOKEN; return (VOID); }
+"volatile"                          { return TOKEN(VOLATILE); }
+"while"                             { return TOKEN(WHILE); }
+"_Alignas"                          { SAVE_TOKEN; return (ALIGNAS); }
+"_Alignof"                          { SAVE_TOKEN; return (ALIGNOF); }
+"_Atomic"                           { SAVE_TOKEN; return (ATOMIC); }
+"_Bool"                             { SAVE_TOKEN; return (BOOL); }
+"_Complex"                          { SAVE_TOKEN; return (COMPLEX); }
+"_Generic"                          { SAVE_TOKEN; return (GENERIC); }
+"_Imaginary"                        { SAVE_TOKEN; return (IMAGINARY); }
+"_Noreturn"                         { SAVE_TOKEN; return (NORETURN); }
+"_Static_assert"                    { SAVE_TOKEN; return (STATIC_ASSERT); }
+"_Thread_local"                     { SAVE_TOKEN; return (THREAD_LOCAL); }
+"__func__"                          { SAVE_TOKEN; return (FUNC_NAME); }
 
-{L}{A}*					{ return check_type(); }
+{L}{A}*                             { SAVE_TOKEN; return (IDENTIFIER); /* Identifier */ }
 
-{HP}{H}+{IS}?				{ return I_CONSTANT; }
-{NZ}{D}*{IS}?				{ return I_CONSTANT; }
-"0"{O}*{IS}?				{ return I_CONSTANT; }
-{CP}?"'"([^'\\\n]|{ES})+"'"		{ return I_CONSTANT; }
+{HP}{H}+{IS}?                       { SAVE_TOKEN; return (I_CONSTANT); /* Integer */ }
+{NZ}{D}*{IS}?                       { SAVE_TOKEN; return (I_CONSTANT); /* Integer */ }
+"0"{O}*{IS}?                        { SAVE_TOKEN; return (I_CONSTANT); /* Integer */ }
+{CP}?"'"([^'\\\n]|{ES})+"'"         { SAVE_TOKEN; return (I_CONSTANT); /* Integer */ }
 
-{D}+{E}{FS}?				{ return F_CONSTANT; }
-{D}*"."{D}+{E}?{FS}?			{ return F_CONSTANT; }
-{D}+"."{E}?{FS}?			{ return F_CONSTANT; }
-{HP}{H}+{P}{FS}?			{ return F_CONSTANT; }
-{HP}{H}*"."{H}+{P}{FS}?			{ return F_CONSTANT; }
-{HP}{H}+"."{P}{FS}?			{ return F_CONSTANT; }
+{D}+{E}{FS}?                        { SAVE_TOKEN; return (F_CONSTANT); /* Floating Point */ }
+{D}*"."{D}+{E}?{FS}?                { SAVE_TOKEN; return (F_CONSTANT); /* Floating Point */ }
+{D}+"."{E}?{FS}?                    { SAVE_TOKEN; return (F_CONSTANT); /* Floating Point */ }
+{HP}{H}+{P}{FS}?                    { SAVE_TOKEN; return (F_CONSTANT); /* Floating Point */ }
+{HP}{H}*"."{H}+{P}{FS}?             { SAVE_TOKEN; return (F_CONSTANT); /* Floating Point */ }
+{HP}{H}+"."{P}{FS}?                 { SAVE_TOKEN; return (F_CONSTANT); /* Floating Point */ }
 
-({SP}?\"([^"\\\n]|{ES})*\"{WS}*)+	{ return STRING_LITERAL; }
+({SP}?\"([^"\\\n]|{ES})*\"{WS}*)+   { SAVE_TOKEN; return (STRING_LITERAL); /* String Literal */ }
 
-"..."					{ return ELLIPSIS; }
-">>="					{ return RIGHT_ASSIGN; }
-"<<="					{ return LEFT_ASSIGN; }
-"+="					{ return ADD_ASSIGN; }
-"-="					{ return SUB_ASSIGN; }
-"*="					{ return MUL_ASSIGN; }
-"/="					{ return DIV_ASSIGN; }
-"%="					{ return MOD_ASSIGN; }
-"&="					{ return AND_ASSIGN; }
-"^="					{ return XOR_ASSIGN; }
-"|="					{ return OR_ASSIGN; }
-">>"					{ return RIGHT_OP; }
-"<<"					{ return LEFT_OP; }
-"++"					{ return INC_OP; }
-"--"					{ return DEC_OP; }
-"->"					{ return PTR_OP; }
-"&&"					{ return AND_OP; }
-"||"					{ return OR_OP; }
-"<="					{ return LE_OP; }
-">="					{ return GE_OP; }
-"=="					{ return EQ_OP; }
-"!="					{ return NE_OP; }
-";"					{ return ';'; }
-("{"|"<%")				{ return '{'; }
-("}"|"%>")				{ return '}'; }
-","					{ return ','; }
-":"					{ return ':'; }
-"="					{ return '='; }
-"("					{ return '('; }
-")"					{ return ')'; }
-("["|"<:")				{ return '['; }
-("]"|":>")				{ return ']'; }
-"."					{ return '.'; }
-"&"					{ return '&'; }
-"!"					{ return '!'; }
-"~"					{ return '~'; }
-"-"					{ return '-'; }
-"+"					{ return '+'; }
-"*"					{ return '*'; }
-"/"					{ return '/'; }
-"%"					{ return '%'; }
-"<"					{ return '<'; }
-">"					{ return '>'; }
-"^"					{ return '^'; }
-"|"					{ return '|'; }
-"?"					{ return '?'; }
-
-{WS}+					{ /* whitespace separates tokens */ }
-.					{ /* discard bad characters */ }
+"..."                               { return TOKEN(ELLIPSIS); }
+">>="                               { return TOKEN(RIGHT_ASSIGN); }
+"<<="                               { return TOKEN(LEFT_ASSIGN); }
+"+="                                { return TOKEN(ADD_ASSIGN); }
+"-="                                { return TOKEN(SUB_ASSIGN); }
+"*="                                { return TOKEN(MUL_ASSIGN); }
+"/="                                { return TOKEN(DIV_ASSIGN); }
+"%="                                { return TOKEN(MOD_ASSIGN); }
+"&="                                { return TOKEN(AND_ASSIGN); }
+"^="                                { return TOKEN(XOR_ASSIGN); }
+"|="                                { return TOKEN(OR_ASSIGN); }
+">>"                                { return TOKEN(RIGHT_OP); }
+"<<"                                { return TOKEN(LEFT_OP); }
+"++"                                { return TOKEN(INC_OP); }
+"--"                                { return TOKEN(DEC_OP); }
+"->"                                { return TOKEN(PTR_OP); }
+"&&"                                { return TOKEN(AND_OP); }
+"||"                                { return TOKEN(OR_OP); }
+"<="                                { return TOKEN(LE_OP); }
+">="                                { return TOKEN(GE_OP); }
+"=="                                { return TOKEN(EQ_OP); }
+"!="                                { return TOKEN(NE_OP); }
+";"                                 { return ';'; }
+("{"|"<%")                          { return '{'; }
+("}"|"%>")                          { return '}'; }
+","                                 { return ','; }
+":"                                 { return ':'; }
+"="                                 { return '='; }
+"("                                 { return '('; }
+")"                                 { return ')'; }
+("["|"<:")                          { return '['; }
+("]"|":>")                          { return ']'; }
+"."                                 { return '.'; }
+"&"                                 { return '&'; }
+"!"                                 { return '!'; }
+"~"                                 { return '~'; }
+"-"                                 { return '-'; }
+"+"                                 { return '+'; }
+"*"                                 { return '*'; }
+"/"                                 { return '/'; }
+"%"                                 { return '%'; }
+"<"                                 { return '<'; }
+">"                                 { return '>'; }
+"^"                                 { return '^'; }
+"|"                                 { return '|'; }
+"?"                                 { return '?'; }
 
 %%
 
@@ -198,17 +193,4 @@ static void comment(void)
 	}
 
     yyerror("unterminated comment");
-}
-
-static int check_type(void)
-{
-    switch (sym_type(yytext))
-    {
-    case TYPEDEF_NAME:                /* previously defined */
-        return TYPEDEF_NAME;
-    case ENUMERATION_CONSTANT:        /* previously defined */
-        return ENUMERATION_CONSTANT;
-    default:                          /* includes undefined */
-        return IDENTIFIER;
-    }
 }
