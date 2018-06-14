@@ -72,11 +72,11 @@ translation_unit
 	;
 
 external_declaration
-    : variable_declaration
+    : variable_declaration ';'
     | function_declaration
     | struct_declaration
     | expression {$$ = new AST_ExpressionStatement(std::shared_ptr<AST_Expression>($1));}
-    | RETURN expression {$$ = new AST_ReturnStatement(std::shared_ptr<AST_Expression>($2));}
+    | RETURN expression ';' {$$ = new AST_ReturnStatement(std::shared_ptr<AST_Expression>($2));}
     | if_statement
     | for_statement
     | while_statement
