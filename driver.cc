@@ -3,8 +3,11 @@
 #include <cctype>
 #include <iostream>
 #include "driver.h"
+#include "absyn.h"
 
 extern int yyparse();
+
+extern std::shared_ptr<AST_Block> programBlock;
 
 std::istream *lexer_ins_;
 
@@ -41,4 +44,6 @@ void Driver::parse_helper(std::istream &stream)
     {
         std::cerr << "parse failed" << std::endl;
     }
+
+    std::cout << programBlock << std::endl;
 }
