@@ -174,6 +174,9 @@ extern std::istream* lexer_ins_;
 "|"                                 { return TOKEN(BIT_OR_OP); }
 "?"                                 { return '?'; }
 
+{WS}+                               { /* whitespace separates tokens */ }
+.                                   { /* discard bad characters */ }
+
 %%
 
 int yywrap(void)        /* called at end of input */

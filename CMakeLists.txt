@@ -26,7 +26,11 @@ set(SOURCE_FILES
         ${FLEX_MyScanner_OUTPUTS}
         driver.h
         driver.cc
-        absyn.h type.h type.cc IR.h IR.cc)
+        absyn.h
+        type.h
+        type.cc
+        IR.h
+        IR.cc)
 add_executable(Slang ${SOURCE_FILES})
 
 llvm_map_components_to_libnames(llvm_libs support core irreader mcjit native)
