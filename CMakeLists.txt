@@ -26,7 +26,8 @@ set(SOURCE_FILES
         ${BISON_MyParser_OUTPUTS}
         ${FLEX_MyScanner_OUTPUTS}
         driver.h
-        driver.cc absyn.h)
+        driver.cc
+        absyn.h)
 add_executable(Slang ${SOURCE_FILES})
 
 llvm_map_components_to_libnames(llvm_libs support core irreader mcjit native)

@@ -24,6 +24,7 @@ WS  [ \t\v\n\f]
 %{
 #include <cstdio>
 #include <iostream>
+#include "absyn.h"
 #include "parser.h"
 
 extern void yyerror(const char *);  /* prints grammar violation message */
@@ -159,18 +160,18 @@ extern std::istream* lexer_ins_;
 ("["|"<:")                          { return '['; }
 ("]"|":>")                          { return ']'; }
 "."                                 { return '.'; }
-"&"                                 { return '&'; }
+"&"                                 { return TOKEN(BIT_AND_OP); }
 "!"                                 { return '!'; }
 "~"                                 { return '~'; }
-"-"                                 { return '-'; }
-"+"                                 { return '+'; }
-"*"                                 { return '*'; }
-"/"                                 { return '/'; }
-"%"                                 { return '%'; }
-"<"                                 { return '<'; }
-">"                                 { return '>'; }
-"^"                                 { return '^'; }
-"|"                                 { return '|'; }
+"-"                                 { return TOKEN(SUB_OP); }
+"+"                                 { return TOKEN(ADD_OP); }
+"*"                                 { return TOKEN(MUL_OP); }
+"/"                                 { return TOKEN(DIV_OP); }
+"%"                                 { return TOKEN(MOD_OP); }
+"<"                                 { return TOKEN(LT_OP); }
+">"                                 { return TOKEN(GT_OP); }
+"^"                                 { return TOKEN(BIT_XOR_OP); }
+"|"                                 { return TOKEN(BIT_OR_OP); }
 "?"                                 { return '?'; }
 
 %%

@@ -1,9 +1,15 @@
-#ifndef ASTNODES_H
-#define ASTNODES_H
+#ifndef SLANG_ABSYN_H
+#define SLANG_ABSYN_H
 
 #include <iostream>
 #include <vector>
 #include <llvm/IR/Value.h>
+#include <memory>
+#include <string>
+
+using std::shared_ptr;
+using std::make_shared;
+using std::string;
 
 class GenCodeContext;
 
@@ -25,7 +31,9 @@ public:
     virtual ~AST_Node() = default;
 
     virtual llvm::Value *generateCode(GenCodeContext &context)
-    { return static_cast<llvm::Value *>(nullptr); }
+    {
+        return static_cast<llvm::Value *>(nullptr);
+    }
 };
 
 class AST_Expression : public AST_Node
@@ -76,6 +84,9 @@ class AST_Identifier : public AST_Expression
 public:
     std::string name;
     bool isType = false;
+    bool isArray = false;
+
+    shared_ptr<AST_ExpressionList> arraySize = make_shared<AST_ExpressionList>();
 
     AST_Identifier() = default;
 
@@ -172,7 +183,7 @@ public:
     AST_VariableDeclaration() = default;
 
     AST_VariableDeclaration(const std::shared_ptr<AST_Identifier> type, std::shared_ptr<AST_Identifier> id,
-                         std::shared_ptr<AST_Expression> assignmentExpr = nullptr) :
+                            std::shared_ptr<AST_Expression> assignmentExpr = nullptr) :
             type(type),
             id(id),
             assignmentExpr(assignmentExpr)
@@ -188,16 +199,37 @@ public:
     std::shared_ptr<AST_Identifier> id;
     std::shared_ptr<AST_VariableList> arguments = std::make_shared<AST_VariableList>();
     std::shared_ptr<AST_Block> block;
+    bool isExternal;
 
     AST_FunctionDeclaration() = default;
 
     AST_FunctionDeclaration(std::shared_ptr<AST_Identifier> type, std::shared_ptr<AST_Identifier> id,
-                         std::shared_ptr<AST_VariableList> arguments, std::shared_ptr<AST_Block> block) :
+                            std::shared_ptr<AST_VariableList> arguments, std::shared_ptr<AST_Block> block,
+                            bool isExternal = false) :
             type(type),
             id(id),
             arguments(arguments),
-            block(block)
+            block(block),
+            isExternal(isExternal)
     {}
+
+    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+};
+
+class AST_StructDeclaration : public AST_Statement
+{
+public:
+    shared_ptr<AST_Identifier> name;
+    shared_ptr<AST_VariableList> members = make_shared<AST_VariableList>();
+
+    AST_StructDeclaration()
+    {}
+
+    AST_StructDeclaration(shared_ptr<AST_Identifier> id, shared_ptr<AST_VariableList> arguments)
+            : name(id), members(arguments)
+    {
+
+    }
 
     virtual llvm::Value *generateCode(GenCodeContext &context) override;
 };
@@ -225,7 +257,7 @@ public:
     AST_IfStatement() = default;
 
     AST_IfStatement(std::shared_ptr<AST_Expression> condition, std::shared_ptr<AST_Block> trueBlock,
-                 std::shared_ptr<AST_Block> falseBlock = nullptr) :
+                    std::shared_ptr<AST_Block> falseBlock = nullptr) :
             condition(condition),
             trueBlock(trueBlock),
             falseBlock(falseBlock)
@@ -243,7 +275,8 @@ public:
     AST_ForStatement() = default;
 
     AST_ForStatement(std::shared_ptr<AST_Block> block, std::shared_ptr<AST_Expression> initial = nullptr,
-                  std::shared_ptr<AST_Expression> condition = nullptr, std::shared_ptr<AST_Expression> increment = nullptr) :
+                     std::shared_ptr<AST_Expression> condition = nullptr,
+                     std::shared_ptr<AST_Expression> increment = nullptr) :
             block(block),
             initial(initial),
             condition(condition),
@@ -258,7 +291,107 @@ public:
     virtual llvm::Value *generateCode(GenCodeContext &context) override;
 };
 
-class AST_Literal : AST_Expression
+
+class AST_StructMember : public AST_Expression
+{
+public:
+    shared_ptr<AST_Identifier> id;
+    shared_ptr<AST_Identifier> member;
+
+    AST_StructMember()
+    {}
+
+    AST_StructMember(shared_ptr<AST_Identifier> structName, shared_ptr<AST_Identifier> member)
+            : id(structName), member(member)
+    {}
+
+    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+
+};
+
+class AST_ArrayIndex : public AST_Expression
+{
+public:
+    shared_ptr<AST_Identifier> arrayName;
+//    shared_ptr<AST_Expression>  expression;
+    shared_ptr<AST_ExpressionList> expressions = make_shared<AST_ExpressionList>();
+
+    AST_ArrayIndex()
+    {}
+
+    AST_ArrayIndex(shared_ptr<AST_Identifier> name, shared_ptr<AST_Expression> exp)
+            : arrayName(name)
+    {
+        expressions->push_back(exp);
+    }
+
+
+    AST_ArrayIndex(shared_ptr<AST_Identifier> name, shared_ptr<AST_ExpressionList> list)
+            : arrayName(name), expressions(list)
+    {
+    }
+
+    llvm::Value *generateCode(GenCodeContext &context) override;
+
+};
+
+class AST_ArrayAssignment : public AST_Expression
+{
+public:
+    shared_ptr<AST_ArrayIndex> arrayIndex;
+    shared_ptr<AST_Expression> expression;
+
+    AST_ArrayAssignment()
+    {}
+
+    AST_ArrayAssignment(shared_ptr<AST_ArrayIndex> index, shared_ptr<AST_Expression> exp)
+            : arrayIndex(index), expression(exp)
+    {
+
+    }
+
+    llvm::Value *generateCode(GenCodeContext &context) override;
+
+};
+
+class AST_ArrayInitialization : public AST_Statement
+{
+public:
+
+    AST_ArrayInitialization()
+    {}
+
+    shared_ptr<AST_VariableDeclaration> declaration;
+    shared_ptr<AST_ExpressionList> expressionList = make_shared<AST_ExpressionList>();
+
+    AST_ArrayInitialization(shared_ptr<AST_VariableDeclaration> dec, shared_ptr<AST_ExpressionList> list)
+            : declaration(dec), expressionList(list)
+    {}
+
+    llvm::Value *generateCode(GenCodeContext &context) override;
+
+};
+
+class AST_StructAssignment : public AST_Expression
+{
+public:
+    shared_ptr<AST_StructMember> structMember;
+    shared_ptr<AST_Expression> expression;
+
+    AST_StructAssignment()
+    {}
+
+    AST_StructAssignment(shared_ptr<AST_StructMember> member, shared_ptr<AST_Expression> exp)
+            : structMember(member), expression(exp)
+    {
+
+    }
+
+    llvm::Value *generateCode(GenCodeContext &context) override;
+
+};
+
+class AST_Literal : public AST_Expression
 {
 public:
     std::string value;
@@ -274,4 +407,4 @@ public:
 
 std::unique_ptr<AST_Expression> LogError(std::string str);
 
-#endif //ASTNODES_H
+#endif //SLANG_ABSYN_H
