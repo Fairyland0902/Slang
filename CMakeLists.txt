@@ -11,10 +11,9 @@ find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-BISON_TARGET(MyInterpreter interpreter.y ${CMAKE_CURRENT_BINARY_DIR}/interpreter.cc DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/interpreter.h)
 BISON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cc DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser.h)
 FLEX_TARGET(MyScanner scanner.l ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc)
-ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser MyASTTree)
+ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
