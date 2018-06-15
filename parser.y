@@ -5,13 +5,19 @@
 
     AST_Block* programBlock;
     extern int yylex();
+    extern int yyrow;
+    extern int yycol;
+    extern const char* yyfile;
 
     void yyerror(const char *s)
     {
     	fflush(stdout);
-    	fprintf(stderr, "*** %s\n", s);
+    	fprintf(stderr, "%s:%d:%d:\033[31m error:\033[0m %s\n", yyfile, yyrow, yycol, s);
     }
 %}
+
+%define parse.lac full
+%define parse.error verbose
 
 %union
 {

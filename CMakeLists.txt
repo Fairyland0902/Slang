@@ -4,10 +4,12 @@ project(Slang)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
 
-find_package(BISON)
-find_package(FLEX)
+find_package(BISON REQUIRED)
+find_package(FLEX REQUIRED)
 find_package(LLVM REQUIRED CONFIG)
 
+message(STATUS "Found BISON ${BISON_VERSION}")
+message(STATUS "Found FLEX ${FLEX_VERSION}")
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 

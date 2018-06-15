@@ -2,6 +2,8 @@
 #include <cctype>
 #include <iostream>
 
+const char* yyfile;
+
 int main(int argc, char **argv)
 {
     // Check for the right # of arguments.
@@ -9,6 +11,7 @@ int main(int argc, char **argv)
     {
         // Compile from an input file.
         Driver driver;
+        yyfile = argv[1];
         driver.parse(argv[1]);
     } else
     {
