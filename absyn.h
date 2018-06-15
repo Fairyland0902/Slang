@@ -11,7 +11,7 @@ using std::shared_ptr;
 using std::make_shared;
 using std::string;
 
-class GenCodeContext;
+class CodeGenContext;
 
 class AST_Expression;
 
@@ -34,7 +34,7 @@ public:
 
     virtual void print(std::string prefix) const = 0;
 
-    virtual llvm::Value *generateCode(GenCodeContext &context)
+    virtual llvm::Value *generateCode(CodeGenContext &context)
     {
         return static_cast<llvm::Value *>(nullptr);
     }
@@ -96,7 +96,7 @@ public:
         std::cout << prefix << getTypeName() << DELIMINATER << value << std::endl;
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_Integer : public AST_Expression
@@ -119,7 +119,7 @@ public:
         std::cout << prefix << getTypeName() << DELIMINATER << value << std::endl;
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 
     operator AST_Double() const
     {
@@ -160,7 +160,7 @@ public:
         }
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_MethodCall : public AST_Expression
@@ -195,7 +195,7 @@ public:
         }
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_BinaryOperator : public AST_Expression
@@ -227,7 +227,7 @@ public:
         rhs->print(nextPrefix);
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_Assignment : public AST_Expression
@@ -257,7 +257,7 @@ public:
             rhs(rhs)
     {}
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_Block : public AST_Expression
@@ -282,7 +282,7 @@ public:
         }
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_ExpressionStatement : public AST_Statement
@@ -308,7 +308,7 @@ public:
         expression->print(nextPrefix);
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_VariableDeclaration : public AST_Statement
@@ -348,7 +348,7 @@ public:
         }
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_FunctionDeclaration : public AST_Statement
@@ -398,7 +398,7 @@ public:
         }
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_StructDeclaration : public AST_Statement
@@ -429,7 +429,7 @@ public:
         }
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_ReturnStatement : public AST_Statement
@@ -454,7 +454,7 @@ public:
         expression->print(nextPrefix);
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_IfStatement : public AST_Statement
@@ -490,7 +490,7 @@ public:
         }
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_ForStatement : public AST_Statement
@@ -540,7 +540,7 @@ public:
         block->print(nextPrefix);
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 
@@ -570,7 +570,7 @@ public:
         member->print(nextPrefix);
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 
 };
 
@@ -612,7 +612,7 @@ public:
         }
     }
 
-    llvm::Value *generateCode(GenCodeContext &context) override;
+    llvm::Value *generateCode(CodeGenContext &context) override;
 
 };
 
@@ -642,7 +642,7 @@ public:
         expression->print(nextPrefix);
     }
 
-    llvm::Value *generateCode(GenCodeContext &context) override;
+    llvm::Value *generateCode(CodeGenContext &context) override;
 
 };
 
@@ -677,7 +677,7 @@ public:
         }
     }
 
-    llvm::Value *generateCode(GenCodeContext &context) override;
+    llvm::Value *generateCode(CodeGenContext &context) override;
 
 };
 
@@ -707,7 +707,7 @@ public:
         expression->print(nextPrefix);
     }
 
-    llvm::Value *generateCode(GenCodeContext &context) override;
+    llvm::Value *generateCode(CodeGenContext &context) override;
 
 };
 
@@ -732,7 +732,7 @@ public:
         std::cout << prefix << getTypeName() << DELIMINATER << value << std::endl;
     }
 
-    virtual llvm::Value *generateCode(GenCodeContext &context) override;
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 //std::unique_ptr<AST_Expression> LogError(std::string str);

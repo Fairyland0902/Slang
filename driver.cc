@@ -4,6 +4,8 @@
 #include <iostream>
 #include "driver.h"
 #include "absyn.h"
+#include "IR.h"
+#include "obj_gen.h"
 
 extern int yyparse();
 
@@ -47,4 +49,8 @@ void Driver::parse_helper(std::istream &stream)
 
     std::cout << programBlock << std::endl;
     programBlock->print("--");
+
+    CodeGenContext context;
+    context.generateCode(*programBlock);
+    generateObj(context);
 }

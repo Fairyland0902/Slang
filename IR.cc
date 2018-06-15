@@ -7,8 +7,6 @@
 #include <llvm/Support/raw_ostream.h>
 
 #include "IR.h"
-#include "absyn.h"
-#include "type.h"
 
 using legacy::PassManager;
 #define ISTYPE(value, id) (value->getType()->getTypeID() == id)
@@ -20,12 +18,12 @@ using legacy::PassManager;
  */
 
 //
-static Type *TypeOf(const AST_Identifier &type, GenCodeContext &context)
+static Type *TypeOf(const AST_Identifier &type, CodeGenContext &context)
 {        // get llvm::type of variable base on its identifier
     return context.typeSystem.getVarType(type);
 }
 
-static Value *CastToBoolean(GenCodeContext &context, Value *condValue)
+static Value *CastToBoolean(CodeGenContext &context, Value *condValue)
 {
     if (ISTYPE(condValue, Type::IntegerTyID))
     {
@@ -40,7 +38,7 @@ static Value *CastToBoolean(GenCodeContext &context, Value *condValue)
     }
 }
 
-static llvm::Value *calcArrayIndex(shared_ptr<AST_ArrayIndex> index, GenCodeContext &context)
+static llvm::Value *calcArrayIndex(shared_ptr<AST_ArrayIndex> index, CodeGenContext &context)
 {
     auto sizeVec = context.getArraySize(index->arrayName->name);
     cout << "sizeVec:" << sizeVec.size() << ", expressions: " << index->expressions->size() << endl;
@@ -57,7 +55,7 @@ static llvm::Value *calcArrayIndex(shared_ptr<AST_ArrayIndex> index, GenCodeCont
     return expression->generateCode(context);
 }
 
-void GenCodeContext::generateCode(AST_Block &root)
+void CodeGenContext::generateCode(AST_Block &root)
 {
     cout << "Generating IR code" << endl;
 
@@ -78,7 +76,7 @@ void GenCodeContext::generateCode(AST_Block &root)
     return;
 }
 
-llvm::Value *AST_Assignment::generateCode(GenCodeContext &context)
+llvm::Value *AST_Assignment::generateCode(CodeGenContext &context)
 {
     cout << "Generating assignment of " << this->lhs->name << " = " << endl;
     Value *dst = context.getSymbolValue(this->lhs->name);
@@ -98,7 +96,7 @@ llvm::Value *AST_Assignment::generateCode(GenCodeContext &context)
     return dst;
 }
 
-llvm::Value *AST_BinaryOperator::generateCode(GenCodeContext &context)
+llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
 {
     cout << "Generating binary operator" << endl;
 
@@ -166,7 +164,7 @@ llvm::Value *AST_BinaryOperator::generateCode(GenCodeContext &context)
     }
 }
 
-llvm::Value *AST_Block::generateCode(GenCodeContext &context)
+llvm::Value *AST_Block::generateCode(CodeGenContext &context)
 {
     cout << "Generating block" << endl;
     Value *last = nullptr;
@@ -177,19 +175,19 @@ llvm::Value *AST_Block::generateCode(GenCodeContext &context)
     return last;
 }
 
-llvm::Value *AST_Integer::generateCode(GenCodeContext &context)
+llvm::Value *AST_Integer::generateCode(CodeGenContext &context)
 {
     cout << "Generating Integer: " << this->value << endl;
     return ConstantInt::get(Type::getInt32Ty(context.llvmContext), this->value, true);
 }
 
-llvm::Value *AST_Double::generateCode(GenCodeContext &context)
+llvm::Value *AST_Double::generateCode(CodeGenContext &context)
 {
     cout << "Generating Double: " << this->value << endl;
     return ConstantFP::get(Type::getDoubleTy(context.llvmContext), this->value);
 }
 
-llvm::Value *AST_Identifier::generateCode(GenCodeContext &context)
+llvm::Value *AST_Identifier::generateCode(CodeGenContext &context)
 {
     cout << "Generating identifier " << this->name << endl;
     Value *value = context.getSymbolValue(this->name);
@@ -214,12 +212,12 @@ llvm::Value *AST_Identifier::generateCode(GenCodeContext &context)
 
 }
 
-llvm::Value *AST_ExpressionStatement::generateCode(GenCodeContext &context)
+llvm::Value *AST_ExpressionStatement::generateCode(CodeGenContext &context)
 {
     return this->expression->generateCode(context);
 }
 
-llvm::Value *AST_FunctionDeclaration::generateCode(GenCodeContext &context)
+llvm::Value *AST_FunctionDeclaration::generateCode(CodeGenContext &context)
 {
     cout << "Generating function declaration of " << this->id->name << endl;
     std::vector<Type *> argTypes;
@@ -288,7 +286,7 @@ llvm::Value *AST_FunctionDeclaration::generateCode(GenCodeContext &context)
 }
 
 
-llvm::Value *AST_StructDeclaration::generateCode(GenCodeContext &context)
+llvm::Value *AST_StructDeclaration::generateCode(CodeGenContext &context)
 {
     cout << "Generating struct declaration of " << this->name->name << endl;
 
@@ -309,7 +307,7 @@ llvm::Value *AST_StructDeclaration::generateCode(GenCodeContext &context)
     return nullptr;
 }
 
-llvm::Value *AST_MethodCall::generateCode(GenCodeContext &context)
+llvm::Value *AST_MethodCall::generateCode(CodeGenContext &context)
 {
     cout << "Generating method call of " << this->id->name << endl;
     Function *calleeF = context.theModule->getFunction(this->id->name);
@@ -335,7 +333,7 @@ llvm::Value *AST_MethodCall::generateCode(GenCodeContext &context)
     return context.builder.CreateCall(calleeF, argsv, "calltmp");
 }
 
-llvm::Value *AST_VariableDeclaration::generateCode(GenCodeContext &context)
+llvm::Value *AST_VariableDeclaration::generateCode(CodeGenContext &context)
 {
     cout << "Generating variable declaration of " << this->type->name << " " << this->id->name << endl;
     Type *type = TypeOf(*this->type, context);
@@ -376,7 +374,7 @@ llvm::Value *AST_VariableDeclaration::generateCode(GenCodeContext &context)
     return inst;
 }
 
-llvm::Value *AST_ReturnStatement::generateCode(GenCodeContext &context)
+llvm::Value *AST_ReturnStatement::generateCode(CodeGenContext &context)
 {
     cout << "Generating return statement" << endl;
     Value *returnValue = this->expression->generateCode(context);
@@ -384,7 +382,7 @@ llvm::Value *AST_ReturnStatement::generateCode(GenCodeContext &context)
     return returnValue;
 }
 
-llvm::Value *AST_IfStatement::generateCode(GenCodeContext &context)
+llvm::Value *AST_IfStatement::generateCode(CodeGenContext &context)
 {
     cout << "Generating if statement" << endl;
     Value *condValue = this->condition->generateCode(context);
@@ -442,7 +440,7 @@ llvm::Value *AST_IfStatement::generateCode(GenCodeContext &context)
     return nullptr;
 }
 
-llvm::Value *AST_ForStatement::generateCode(GenCodeContext &context)
+llvm::Value *AST_ForStatement::generateCode(CodeGenContext &context)
 {
 
     Function *theFunction = context.builder.GetInsertBlock()->getParent();
@@ -489,7 +487,7 @@ llvm::Value *AST_ForStatement::generateCode(GenCodeContext &context)
     return nullptr;
 }
 
-llvm::Value *AST_StructMember::generateCode(GenCodeContext &context)
+llvm::Value *AST_StructMember::generateCode(CodeGenContext &context)
 {
     cout << "Generating struct member expression of " << this->id->name << "." << this->member->name << endl;
 
@@ -513,7 +511,7 @@ llvm::Value *AST_StructMember::generateCode(GenCodeContext &context)
     return context.builder.CreateLoad(ptr);
 }
 
-llvm::Value *AST_StructAssignment::generateCode(GenCodeContext &context)
+llvm::Value *AST_StructAssignment::generateCode(CodeGenContext &context)
 {
     cout << "Generating struct assignment of " << this->structMember->id->name << "."
          << this->structMember->member->name << endl;
@@ -541,7 +539,7 @@ llvm::Value *AST_StructAssignment::generateCode(GenCodeContext &context)
     return context.builder.CreateStore(value, ptr);
 }
 
-llvm::Value *AST_ArrayIndex::generateCode(GenCodeContext &context)
+llvm::Value *AST_ArrayIndex::generateCode(CodeGenContext &context)
 {
     cout << "Generating array index expression of " << this->arrayName->name << endl;
     auto varPtr = context.getSymbolValue(this->arrayName->name);
@@ -571,7 +569,7 @@ llvm::Value *AST_ArrayIndex::generateCode(GenCodeContext &context)
 }
 
 
-llvm::Value *AST_ArrayAssignment::generateCode(GenCodeContext &context)
+llvm::Value *AST_ArrayAssignment::generateCode(CodeGenContext &context)
 {
     cout << "Generating array index assignment of " << this->arrayIndex->arrayName->name << endl;
     auto varPtr = context.getSymbolValue(this->arrayIndex->arrayName->name);
@@ -594,7 +592,7 @@ llvm::Value *AST_ArrayAssignment::generateCode(GenCodeContext &context)
     return context.builder.CreateAlignedStore(this->expression->generateCode(context), ptr, 4);
 }
 
-llvm::Value *AST_ArrayInitialization::generateCode(GenCodeContext &context)
+llvm::Value *AST_ArrayInitialization::generateCode(CodeGenContext &context)
 {
     cout << "Generating array initialization of " << this->declaration->id->name << endl;
     auto arrayPtr = this->declaration->generateCode(context);
@@ -613,7 +611,7 @@ llvm::Value *AST_ArrayInitialization::generateCode(GenCodeContext &context)
     return nullptr;
 }
 
-llvm::Value *AST_Literal::generateCode(GenCodeContext &context)
+llvm::Value *AST_Literal::generateCode(CodeGenContext &context)
 {
     return context.builder.CreateGlobalString(this->value, "string");
 }

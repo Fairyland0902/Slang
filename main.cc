@@ -2,7 +2,7 @@
 #include <cctype>
 #include <iostream>
 
-const char* yyfile;
+const char *yyfile;
 
 int main(int argc, char **argv)
 {
@@ -13,12 +13,13 @@ int main(int argc, char **argv)
         Driver driver;
         yyfile = argv[1];
         driver.parse(argv[1]);
+        // You may need to link obj files manually here.
+        system("clang output.o -o a.out");
     } else
     {
-        std::cout << "Just give a file name to compile from a file." << std::endl;
+        fprintf(stderr, "slang:\033[31m error:\033[0m no input files\n");
         exit(EXIT_FAILURE);
     }
-    // You may need to link obj files manually here.
-//    system("echo 23333");
+
     return EXIT_SUCCESS;
 }

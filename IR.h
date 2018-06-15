@@ -11,8 +11,9 @@
 #include <memory>
 #include <string>
 #include <map>
-#include "absyn.h"
+
 #include "type.h"
+#include "absyn.h"
 #include "parser.h"
 
 using namespace llvm;
@@ -35,7 +36,7 @@ public:
     std::map<string, std::vector<uint64_t>> arraySizes;
 };
 
-class GenCodeContext
+class CodeGenContext
 {
 private:
     std::vector<CodeGenBlock *> blockStack;
@@ -47,7 +48,7 @@ public:
     SymTable globalVars;
     TypeSystem typeSystem;
 
-    GenCodeContext() : builder(llvmContext), typeSystem(llvmContext)
+    CodeGenContext() : builder(llvmContext), typeSystem(llvmContext)
     {
         theModule = unique_ptr<Module>(new Module("main", this->llvmContext));
     }
@@ -169,7 +170,7 @@ public:
         cout << "===================================" << endl;
     }
 
-    void generateCode(AST_Block &);
+    void generateCode(AST_Block &root);
 };
 
 Value *LogErrorV(const char *str);

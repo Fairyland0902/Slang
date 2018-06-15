@@ -32,8 +32,10 @@ set(SOURCE_FILES
         type.h
         type.cc
         IR.h
-        IR.cc)
+        IR.cc
+        obj_gen.h
+        obj_gen.cc)
 add_executable(Slang ${SOURCE_FILES})
 
-llvm_map_components_to_libnames(llvm_libs support core irreader mcjit native)
+llvm_map_components_to_libnames(llvm_libs all)
 target_link_libraries(Slang ${llvm_libs})
