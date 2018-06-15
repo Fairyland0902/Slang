@@ -16,10 +16,9 @@ using legacy::PassManager;
  *       1. unary ops
  *       2. variable declaration list
  */
-
-//
 static Type *TypeOf(const AST_Identifier &type, CodeGenContext &context)
-{        // get llvm::type of variable base on its identifier
+{
+    // get llvm::type of variable base on its identifier
     return context.typeSystem.getVarType(type);
 }
 
@@ -73,7 +72,6 @@ void CodeGenContext::generateCode(AST_Block &root)
     PassManager passManager;
     passManager.add(createPrintModulePass(outs()));
     passManager.run(*(this->theModule.get()));
-    return;
 }
 
 llvm::Value *AST_Assignment::generateCode(CodeGenContext &context)
@@ -105,7 +103,8 @@ llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
     bool fp = false;
 
     if ((L->getType()->getTypeID() == Type::DoubleTyID) || (R->getType()->getTypeID() == Type::DoubleTyID))
-    {  // type upgrade
+    {
+        // type upgrade
         fp = true;
         if ((R->getType()->getTypeID() != Type::DoubleTyID))
         {
@@ -281,10 +280,8 @@ llvm::Value *AST_FunctionDeclaration::generateCode(CodeGenContext &context)
 
     }
 
-
     return function;
 }
-
 
 llvm::Value *AST_StructDeclaration::generateCode(CodeGenContext &context)
 {
@@ -326,7 +323,8 @@ llvm::Value *AST_MethodCall::generateCode(CodeGenContext &context)
     {
         argsv.push_back((*it)->generateCode(context));
         if (!argsv.back())
-        {        // if any argument codegen fail
+        {
+            // if any argument generation fail
             return nullptr;
         }
     }
@@ -391,7 +389,8 @@ llvm::Value *AST_IfStatement::generateCode(CodeGenContext &context)
 
     condValue = CastToBoolean(context, condValue);
 
-    Function *theFunction = context.builder.GetInsertBlock()->getParent();      // the function where if statement is in
+    // the function where if statement is in
+    Function *theFunction = context.builder.GetInsertBlock()->getParent();
 
     BasicBlock *thenBB = BasicBlock::Create(context.llvmContext, "then", theFunction);
     BasicBlock *falseBB = BasicBlock::Create(context.llvmContext, "else");
@@ -568,7 +567,6 @@ llvm::Value *AST_ArrayIndex::generateCode(CodeGenContext &context)
     return context.builder.CreateAlignedLoad(ptr, 4);
 }
 
-
 llvm::Value *AST_ArrayAssignment::generateCode(CodeGenContext &context)
 {
     cout << "Generating array index assignment of " << this->arrayIndex->arrayName->name << endl;
@@ -618,7 +616,6 @@ llvm::Value *AST_Literal::generateCode(CodeGenContext &context)
 
 /*
  * Global Functions
- *
  */
 std::unique_ptr<AST_Expression> LogError(const char *str)
 {

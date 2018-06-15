@@ -65,6 +65,4 @@ void generateObj(CodeGenContext &context, const string &filename)
     dest.flush();
 
     outs() << "Object code wrote to " << filename.c_str() << "\n";
-
-    return;
 }

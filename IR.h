@@ -31,7 +31,8 @@ public:
     BasicBlock *block;
     Value *returnValue;
     std::map<string, Value *> locals;
-    std::map<string, shared_ptr<AST_Identifier>> types;     // type name string of vars
+    // type name string of vars
+    std::map<string, shared_ptr<AST_Identifier>> types;
     std::map<string, bool> isFuncArg;
     std::map<string, std::vector<uint64_t>> arraySizes;
 };

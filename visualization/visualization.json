@@ -1,0 +1,48 @@
+{
+	"children" : 
+	[
+		{
+			"children" : 
+			[
+				{
+					"name" : "AST_Identifier:int"
+				},
+				{
+					"name" : "AST_Identifier:main"
+				},
+				{
+					"children" : 
+					[
+						{
+							"children" : 
+							[
+								{
+									"name" : "AST_Identifier:int"
+								},
+								{
+									"name" : "AST_Identifier:i"
+								},
+								{
+									"name" : "AST_Integer:0"
+								}
+							],
+							"name" : "AST_VariableDeclaration"
+						},
+						{
+							"children" : 
+							[
+								{
+									"name" : "AST_Integer:0"
+								}
+							],
+							"name" : "AST_ReturnStatement"
+						}
+					],
+					"name" : "AST_Block"
+				}
+			],
+			"name" : "AST_FunctionDeclaration"
+		}
+	],
+	"name" : "AST_Block"
+}

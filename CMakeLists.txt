@@ -7,6 +7,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 find_package(LLVM REQUIRED CONFIG)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JSONCPP jsoncpp)
 
 message(STATUS "Found BISON ${BISON_VERSION}")
 message(STATUS "Found FLEX ${FLEX_VERSION}")
@@ -20,6 +22,8 @@ ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(${JSONCPP_INCLUDE_DIRS})
+link_libraries(${JSONCPP_LIBRARIES})
 add_definitions(${LLVM_DEFINITIONS})
 
 set(SOURCE_FILES
@@ -38,4 +42,4 @@ set(SOURCE_FILES
 add_executable(Slang ${SOURCE_FILES})
 
 llvm_map_components_to_libnames(llvm_libs all)
-target_link_libraries(Slang ${llvm_libs})
+target_link_libraries(Slang ${llvm_libs} ${JSONCPP_LIBRARIES})

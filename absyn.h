@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <llvm/IR/Value.h>
+#include <json/json.h>
 #include <memory>
 #include <string>
 
@@ -39,6 +40,11 @@ public:
         return static_cast<llvm::Value *>(nullptr);
     }
 
+    virtual Json::Value generateJson() const
+    {
+        return Json::Value();
+    }
+
 protected:
     const std::string DELIMINATER = ":";
     const std::string PREFIX = "--";
@@ -58,6 +64,13 @@ public:
     {
         std::cout << prefix << getTypeName() << std::endl;
     }
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        return root;
+    }
 };
 
 class AST_Statement : public AST_Node
@@ -73,6 +86,13 @@ public:
     void print(std::string prefix) const override
     {
         std::cout << prefix << getTypeName() << std::endl;
+    }
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        return root;
     }
 };
 
@@ -97,6 +117,13 @@ public:
     }
 
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName() + DELIMINATER + std::to_string(value);
+        return root;
+    }
 };
 
 class AST_Integer : public AST_Expression
@@ -120,6 +147,13 @@ public:
     }
 
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName() + DELIMINATER + std::to_string(value);
+        return root;
+    }
 
     operator AST_Double() const
     {
@@ -160,6 +194,22 @@ public:
         }
     }
 
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName() + DELIMINATER + name + (isArray ? "(Array)" : "");
+        if (isArray)
+        {
+            assert(arraySize->size() > 0);
+            for (auto it = arraySize->begin(); it != arraySize->end(); it++)
+            {
+                root["children"].append((*it)->generateJson());
+            }
+        }
+
+        return root;
+    }
+
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
@@ -195,6 +245,19 @@ public:
         }
     }
 
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(id->generateJson());
+        for (auto it = arguments->begin(); it != arguments->end(); it++)
+        {
+            root["children"].append((*it)->generateJson());
+        }
+
+        return root;
+    }
+
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
@@ -227,6 +290,17 @@ public:
         rhs->print(nextPrefix);
     }
 
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName() + DELIMINATER + std::to_string(op);
+
+        root["children"].append(lhs->generateJson());
+        root["children"].append(rhs->generateJson());
+
+        return root;
+    }
+
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
@@ -237,6 +311,11 @@ public:
     std::shared_ptr<AST_Expression> rhs;
 
     AST_Assignment() = default;
+
+    AST_Assignment(std::shared_ptr<AST_Identifier> lhs, std::shared_ptr<AST_Expression> rhs) :
+            lhs(lhs),
+            rhs(rhs)
+    {}
 
     std::string getTypeName() const override
     {
@@ -252,10 +331,16 @@ public:
         rhs->print(nextPrefix);
     }
 
-    AST_Assignment(std::shared_ptr<AST_Identifier> lhs, std::shared_ptr<AST_Expression> rhs) :
-            lhs(lhs),
-            rhs(rhs)
-    {}
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+
+        root["children"].append(lhs->generateJson());
+        root["children"].append(rhs->generateJson());
+
+        return root;
+    }
 
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
@@ -282,6 +367,18 @@ public:
         }
     }
 
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        for (auto it = statements->begin(); it != statements->end(); it++)
+        {
+            root["children"].append((*it)->generateJson());
+        }
+
+        return root;
+    }
+
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
@@ -306,6 +403,14 @@ public:
         std::string nextPrefix = prefix + this->PREFIX;
         std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
         expression->print(nextPrefix);
+    }
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(expression->generateJson());
+        return root;
     }
 
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
@@ -346,6 +451,20 @@ public:
         {
             assignmentExpr->print(nextPrefix);
         }
+    }
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(type->generateJson());
+        root["children"].append(id->generateJson());
+        if (assignmentExpr)
+        {
+            root["children"].append(assignmentExpr->generateJson());
+        }
+
+        return root;
     }
 
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
@@ -398,6 +517,27 @@ public:
         }
     }
 
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(type->generateJson());
+        root["children"].append(id->generateJson());
+
+        for (auto it = arguments->begin(); it != arguments->end(); it++)
+        {
+            root["children"].append((*it)->generateJson());
+        }
+
+        assert(isExternal || block != nullptr);
+        if (block)
+        {
+            root["children"].append(block->generateJson());
+        }
+
+        return root;
+    };
+
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
@@ -422,11 +562,24 @@ public:
     void print(std::string prefix) const override
     {
         std::string nextPrefix = prefix + this->PREFIX;
-        std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
+        std::cout << prefix << getTypeName() << DELIMINATER << name->name << std::endl;
         for (auto it = members->begin(); it != members->end(); it++)
         {
             (*it)->print(nextPrefix);
         }
+    }
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName() + DELIMINATER + name->name;
+
+        for (auto it = members->begin(); it != members->end(); it++)
+        {
+            root["children"].append((*it)->generateJson());
+        }
+
+        return root;
     }
 
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
@@ -452,6 +605,15 @@ public:
         std::string nextPrefix = prefix + this->PREFIX;
         std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
         expression->print(nextPrefix);
+    }
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(expression->generateJson());
+
+        return root;
     }
 
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
@@ -484,10 +646,24 @@ public:
         std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
         condition->print(nextPrefix);
         trueBlock->print(nextPrefix);
-        if (falseBlock)
+        if (falseBlock != nullptr)
         {
             falseBlock->print(nextPrefix);
         }
+    }
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(condition->generateJson());
+        root["children"].append(trueBlock->generateJson());
+        if (falseBlock != nullptr)
+        {
+            root["children"].append(falseBlock->generateJson());
+        }
+
+        return root;
     }
 
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
@@ -540,6 +716,28 @@ public:
         block->print(nextPrefix);
     }
 
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        if (initial)
+        {
+            root["children"].append(initial->generateJson());
+        }
+        if (condition)
+        {
+            root["children"].append(condition->generateJson());
+        }
+        if (increment)
+        {
+            root["children"].append(increment->generateJson());
+        }
+
+        root["children"].append(block->generateJson());
+
+        return root;
+    }
+
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
@@ -570,6 +768,15 @@ public:
         member->print(nextPrefix);
     }
 
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(id->generateJson());
+        root["children"].append(member->generateJson());
+        return root;
+    }
+
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
 
 };
@@ -578,7 +785,6 @@ class AST_ArrayIndex : public AST_Expression
 {
 public:
     shared_ptr<AST_Identifier> arrayName;
-//    shared_ptr<AST_Expression>  expression;
     shared_ptr<AST_ExpressionList> expressions = make_shared<AST_ExpressionList>();
 
     AST_ArrayIndex()
@@ -612,6 +818,19 @@ public:
         }
     }
 
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(arrayName->generateJson());
+        for (auto it = expressions->begin(); it != expressions->end(); it++)
+        {
+            root["children"].append((*it)->generateJson());
+        }
+
+        return root;
+    }
+
     llvm::Value *generateCode(CodeGenContext &context) override;
 
 };
@@ -640,6 +859,15 @@ public:
         std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
         arrayIndex->print(nextPrefix);
         expression->print(nextPrefix);
+    }
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(arrayIndex->generateJson());
+        root["children"].append(expression->generateJson());
+        return root;
     }
 
     llvm::Value *generateCode(CodeGenContext &context) override;
@@ -677,6 +905,20 @@ public:
         }
     }
 
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(declaration->generateJson());
+
+        for (auto it = expressionList->begin(); it != expressionList->end(); it++)
+        {
+            root["children"].append((*it)->generateJson());
+        }
+
+        return root;
+    }
+
     llvm::Value *generateCode(CodeGenContext &context) override;
 
 };
@@ -707,6 +949,15 @@ public:
         expression->print(nextPrefix);
     }
 
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(structMember->generateJson());
+        root["children"].append(expression->generateJson());
+        return root;
+    }
+
     llvm::Value *generateCode(CodeGenContext &context) override;
 
 };
@@ -730,6 +981,13 @@ public:
     void print(std::string prefix) const override
     {
         std::cout << prefix << getTypeName() << DELIMINATER << value << std::endl;
+    }
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName() + DELIMINATER + value;
+        return root;
     }
 
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
