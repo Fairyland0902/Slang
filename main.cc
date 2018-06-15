@@ -16,6 +16,6 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
     // You may need to link obj files manually here.
-    system("echo 23333");
+//    system("echo 23333");
     return EXIT_SUCCESS;
 }

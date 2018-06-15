@@ -46,4 +46,5 @@ void Driver::parse_helper(std::istream &stream)
     }
 
     std::cout << programBlock << std::endl;
+    programBlock->print("--");
 }
