@@ -221,7 +221,7 @@ public:
 
     AST_MethodCall() = default;
 
-    explicit AST_MethodCall(const std::shared_ptr<AST_Identifier> id) : id(id)
+    explicit AST_MethodCall(const std::shared_ptr<AST_Identifier> id) : id(id), arguments(nullptr)
     {}
 
     AST_MethodCall(const std::shared_ptr<AST_Identifier> id, std::shared_ptr<AST_ExpressionList> arguments) :
@@ -239,9 +239,12 @@ public:
         std::string nextPrefix = prefix + this->PREFIX;
         std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
         this->id->print(nextPrefix);
-        for (auto it = arguments->begin(); it != arguments->end(); it++)
+        if (arguments)
         {
-            (*it)->print(nextPrefix);
+            for (auto it = arguments->begin(); it != arguments->end(); it++)
+            {
+                (*it)->print(nextPrefix);
+            }
         }
     }
 
@@ -250,9 +253,12 @@ public:
         Json::Value root;
         root["name"] = getTypeName();
         root["children"].append(id->generateJson());
-        for (auto it = arguments->begin(); it != arguments->end(); it++)
+        if (arguments)
         {
-            root["children"].append((*it)->generateJson());
+            for (auto it = arguments->begin(); it != arguments->end(); it++)
+            {
+                root["children"].append((*it)->generateJson());
+            }
         }
 
         return root;
@@ -402,14 +408,20 @@ public:
     {
         std::string nextPrefix = prefix + this->PREFIX;
         std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
-        expression->print(nextPrefix);
+        if (expression != nullptr)
+        {
+            expression->print(nextPrefix);
+        }
     }
 
     Json::Value generateJson() const override
     {
         Json::Value root;
         root["name"] = getTypeName();
-        root["children"].append(expression->generateJson());
+        if (expression)
+        {
+            root["children"].append(expression->generateJson());
+        }
         return root;
     }
 
@@ -604,14 +616,20 @@ public:
     {
         std::string nextPrefix = prefix + this->PREFIX;
         std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
-        expression->print(nextPrefix);
+        if (expression)
+        {
+            expression->print(nextPrefix);
+        }
     }
 
     Json::Value generateJson() const override
     {
         Json::Value root;
         root["name"] = getTypeName();
-        root["children"].append(expression->generateJson());
+        if (expression)
+        {
+            root["children"].append(expression->generateJson());
+        }
 
         return root;
     }

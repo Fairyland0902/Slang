@@ -9,6 +9,42 @@
 				},
 				{
 					"name" : "AST_Identifier:printf"
+				},
+				{
+					"children" : 
+					[
+						{
+							"name" : "AST_Identifier:char"
+						},
+						{
+							"name" : "AST_Identifier:format"
+						}
+					],
+					"name" : "AST_VariableDeclaration"
+				}
+			],
+			"name" : "AST_FunctionDeclaration"
+		},
+		{
+			"children" : 
+			[
+				{
+					"name" : "AST_Identifier:int"
+				},
+				{
+					"name" : "AST_Identifier:puts"
+				},
+				{
+					"children" : 
+					[
+						{
+							"name" : "AST_Identifier:char"
+						},
+						{
+							"name" : "AST_Identifier:s"
+						}
+					],
+					"name" : "AST_VariableDeclaration"
 				}
 			],
 			"name" : "AST_FunctionDeclaration"
@@ -35,7 +71,7 @@
 									"name" : "AST_Identifier:i"
 								},
 								{
-									"name" : "AST_Integer:0"
+									"name" : "AST_Integer:1"
 								}
 							],
 							"name" : "AST_VariableDeclaration"
@@ -50,7 +86,94 @@
 											"name" : "AST_Identifier:printf"
 										},
 										{
-											"name" : "AST_Literal:\"hello\""
+											"name" : "AST_Literal:i=%d"
+										},
+										{
+											"name" : "AST_Identifier:i"
+										}
+									],
+									"name" : "AST_MethodCall"
+								}
+							],
+							"name" : "AST_ExpressionStatement"
+						},
+						{
+							"children" : 
+							[
+								{
+									"children" : 
+									[
+										{
+											"name" : "AST_Identifier:puts"
+										},
+										{
+											"name" : "AST_Literal:"
+										}
+									],
+									"name" : "AST_MethodCall"
+								}
+							],
+							"name" : "AST_ExpressionStatement"
+						},
+						{
+							"children" : 
+							[
+								{
+									"children" : 
+									[
+										{
+											"name" : "AST_Identifier:i"
+										},
+										{
+											"children" : 
+											[
+												{
+													"name" : "AST_Identifier:i"
+												},
+												{
+													"name" : "AST_Integer:1"
+												}
+											],
+											"name" : "AST_BinaryOperator:279"
+										}
+									],
+									"name" : "AST_Assignment"
+								}
+							],
+							"name" : "AST_ExpressionStatement"
+						},
+						{
+							"children" : 
+							[
+								{
+									"children" : 
+									[
+										{
+											"name" : "AST_Identifier:printf"
+										},
+										{
+											"name" : "AST_Literal:i=%d"
+										},
+										{
+											"name" : "AST_Identifier:i"
+										}
+									],
+									"name" : "AST_MethodCall"
+								}
+							],
+							"name" : "AST_ExpressionStatement"
+						},
+						{
+							"children" : 
+							[
+								{
+									"children" : 
+									[
+										{
+											"name" : "AST_Identifier:puts"
+										},
+										{
+											"name" : "AST_Literal:"
 										}
 									],
 									"name" : "AST_MethodCall"

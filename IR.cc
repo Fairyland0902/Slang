@@ -143,8 +143,10 @@ llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
             return fp ? context.builder.CreateFMul(L, R, "mulftmp") : context.builder.CreateMul(L, R, "multmp");
         case DIV_OP:
             return fp ? context.builder.CreateFDiv(L, R, "divftmp") : context.builder.CreateSDiv(L, R, "divtmp");
+        case AND_OP:
         case BIT_AND_OP:
             return fp ? LogErrorV("Double type has no AND operation") : context.builder.CreateAnd(L, R, "andtmp");
+        case OR_OP:
         case BIT_OR_OP:
             return fp ? LogErrorV("Double type has no OR operation") : context.builder.CreateOr(L, R, "ortmp");
         case BIT_XOR_OP:
