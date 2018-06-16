@@ -146,8 +146,9 @@ expression_statement
 	;
 
 selection_statement
-	: IF '(' expression ')' block ELSE block            {$$ = new AST_IfStatement(std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Block>($5), std::shared_ptr<AST_Block>($7));}
-	| IF '(' expression ')' block %prec LOWER_THAN_ELSE {$$ = new AST_IfStatement(std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Block>($5));}
+	: IF '(' expression ')' block ELSE block                {$$ = new AST_IfStatement(std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Block>($5), std::shared_ptr<AST_Block>($7));}
+	| IF '(' expression ')' block ELSE selection_statement  {auto tmp_block = new AST_Block(); tmp_block->statements->push_back(std::shared_ptr<AST_Statement>($7)); $$ = new AST_IfStatement(std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Block>($5), std::shared_ptr<AST_Block>(tmp_block));}
+	| IF '(' expression ')' block %prec LOWER_THAN_ELSE     {$$ = new AST_IfStatement(std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Block>($5));}
 	;
 
 iteration_statement
