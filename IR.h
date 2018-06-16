@@ -15,6 +15,7 @@
 #include "type.h"
 #include "absyn.h"
 #include "parser.h"
+#include "debug.h"
 
 using namespace llvm;
 using std::unique_ptr;
@@ -103,7 +104,9 @@ public:
 
     void setFuncArg(string name, bool value)
     {
+#ifdef IR_DEBUG
         cout << "Set " << name << " as func arg" << endl;
+#endif
         blockStack.back()->isFuncArg[name] = value;
     }
 
@@ -139,7 +142,9 @@ public:
 
     void setArraySize(string name, std::vector<uint64_t> value)
     {
+#ifdef IR_DEBUG
         cout << "setArraySize: " << name << ": " << value.size() << endl;
+#endif
         blockStack.back()->arraySizes[name] = value;
 //        cout << "blockStack.back()->arraySizes.size()" << blockStack.back()->arraySizes.size() << endl;
     }

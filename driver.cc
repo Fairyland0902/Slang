@@ -6,6 +6,7 @@
 #include "absyn.h"
 #include "IR.h"
 #include "obj_gen.h"
+#include "debug.h"
 
 extern int yyparse();
 
@@ -44,11 +45,14 @@ void Driver::parse_helper(std::istream &stream)
 
     if (yyparse() != accept)
     {
-        std::cerr << "parse failed" << std::endl;
+        fprintf(stderr, "slang:\033[31m error:\033[0m parse failed\n");
+        exit(EXIT_FAILURE);
     }
 
+#ifdef AST_DEBUG
     std::cout << programBlock << std::endl;
     programBlock->print("--");
+#endif
 
     CodeGenContext context;
     context.generateCode(*programBlock);

@@ -12,9 +12,9 @@ using legacy::PassManager;
 #define ISTYPE(value, id) (value->getType()->getTypeID() == id)
 
 /*
- * TODO:
- *       1. unary ops
- *       2. variable declaration list
+ * @TODO:
+ * 1. unary ops
+ * 2. variable declaration list
  */
 static Type *TypeOf(const AST_Identifier &type, CodeGenContext &context)
 {
@@ -40,7 +40,9 @@ static Value *CastToBoolean(CodeGenContext &context, Value *condValue)
 static llvm::Value *calcArrayIndex(shared_ptr<AST_ArrayIndex> index, CodeGenContext &context)
 {
     auto sizeVec = context.getArraySize(index->arrayName->name);
+#ifdef IR_DEBUG
     cout << "sizeVec:" << sizeVec.size() << ", expressions: " << index->expressions->size() << endl;
+#endif
     assert(sizeVec.size() > 0 && sizeVec.size() == index->expressions->size());
     auto expression = *(index->expressions->rbegin());
 
@@ -56,8 +58,9 @@ static llvm::Value *calcArrayIndex(shared_ptr<AST_ArrayIndex> index, CodeGenCont
 
 void CodeGenContext::generateCode(AST_Block &root)
 {
+#ifdef IR_DEBUG
     cout << "Generating IR code" << endl;
-
+#endif
     std::vector<Type *> sysArgs;
     FunctionType *mainFuncType = FunctionType::get(Type::getVoidTy(this->llvmContext), makeArrayRef(sysArgs), false);
     Function *mainFunc = Function::Create(mainFuncType, GlobalValue::ExternalLinkage, "main");
@@ -66,17 +69,21 @@ void CodeGenContext::generateCode(AST_Block &root)
     pushBlock(block);
     Value *retValue = root.generateCode(*this);
     popBlock();
-
+#ifdef IR_DEBUG
     cout << "Code generate success" << endl;
-
+#endif
     PassManager passManager;
+#ifdef IR_DEBUG
     passManager.add(createPrintModulePass(outs()));
+#endif
     passManager.run(*(this->theModule.get()));
 }
 
 llvm::Value *AST_Assignment::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating assignment of " << this->lhs->name << " = " << endl;
+#endif
     Value *dst = context.getSymbolValue(this->lhs->name);
     auto dstType = context.getSymbolType(this->lhs->name);
     string dstTypeStr = dstType->name;
@@ -85,10 +92,10 @@ llvm::Value *AST_Assignment::generateCode(CodeGenContext &context)
         return LogErrorV("Undeclared variable");
     }
     Value *exp = exp = this->rhs->generateCode(context);
-
+#ifdef IR_DEBUG
     cout << "dst typeid = " << TypeSystem::llvmTypeToStr(context.typeSystem.getVarType(dstTypeStr)) << endl;
     cout << "exp typeid = " << TypeSystem::llvmTypeToStr(exp) << endl;
-
+#endif
     exp = context.typeSystem.cast(exp, context.typeSystem.getVarType(dstTypeStr), context.currentBlock());
     context.builder.CreateStore(exp, dst);
     return dst;
@@ -96,8 +103,9 @@ llvm::Value *AST_Assignment::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating binary operator" << endl;
-
+#endif
     Value *L = this->lhs->generateCode(context);
     Value *R = this->rhs->generateCode(context);
     bool fp = false;
@@ -120,10 +128,11 @@ llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
     {
         return nullptr;
     }
+#ifdef IR_DEBUG
     cout << "fp = " << (fp ? "true" : "false") << endl;
     cout << "L is " << TypeSystem::llvmTypeToStr(L) << endl;
     cout << "R is " << TypeSystem::llvmTypeToStr(R) << endl;
-
+#endif
     switch (this->op)
     {
         case ADD_OP:
@@ -165,7 +174,9 @@ llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_Block::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating block" << endl;
+#endif
     Value *last = nullptr;
     for (auto it = this->statements->begin(); it != this->statements->end(); it++)
     {
@@ -176,19 +187,25 @@ llvm::Value *AST_Block::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_Integer::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating Integer: " << this->value << endl;
+#endif
     return ConstantInt::get(Type::getInt32Ty(context.llvmContext), this->value, true);
 }
 
 llvm::Value *AST_Double::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating Double: " << this->value << endl;
+#endif
     return ConstantFP::get(Type::getDoubleTy(context.llvmContext), this->value);
 }
 
 llvm::Value *AST_Identifier::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating identifier " << this->name << endl;
+#endif
     Value *value = context.getSymbolValue(this->name);
     if (!value)
     {
@@ -199,7 +216,9 @@ llvm::Value *AST_Identifier::generateCode(CodeGenContext &context)
         auto arrayPtr = context.builder.CreateLoad(value, "arrayPtr");
         if (arrayPtr->getType()->isArrayTy())
         {
+#ifdef IR_DEBUG
             cout << "(Array Type)" << endl;
+#endif
 //            arrayPtr->setAlignment(16);
             std::vector<Value *> indices;
             indices.push_back(ConstantInt::get(context.typeSystem.intTy, 0, false));
@@ -218,7 +237,9 @@ llvm::Value *AST_ExpressionStatement::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_FunctionDeclaration::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating function declaration of " << this->id->name << endl;
+#endif
     std::vector<Type *> argTypes;
 
     for (auto &arg: *this->arguments)
@@ -285,8 +306,9 @@ llvm::Value *AST_FunctionDeclaration::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_StructDeclaration::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating struct declaration of " << this->name->name << endl;
-
+#endif
     std::vector<Type *> memberTypes;
 
 //    context.builder.createstr
@@ -306,7 +328,9 @@ llvm::Value *AST_StructDeclaration::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_MethodCall::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating method call of " << this->id->name << endl;
+#endif
     Function *calleeF = context.theModule->getFunction(this->id->name);
     if (!calleeF)
     {
@@ -333,10 +357,11 @@ llvm::Value *AST_MethodCall::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_VariableDeclaration::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating variable declaration of " << this->type->name << " " << this->id->name << endl;
+#endif
     Type *type = TypeOf(*this->type, context);
     Value *initial = nullptr;
-
     Value *inst = nullptr;
 
     if (this->type->isArray)
@@ -361,8 +386,9 @@ llvm::Value *AST_VariableDeclaration::generateCode(CodeGenContext &context)
 
     context.setSymbolType(this->id->name, this->type);
     context.setSymbolValue(this->id->name, inst);
-
+#ifdef IR_DEBUG
     context.PrintSymTable();
+#endif
 
     if (this->assignmentExpr != nullptr)
     {
@@ -374,7 +400,9 @@ llvm::Value *AST_VariableDeclaration::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_ReturnStatement::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating return statement" << endl;
+#endif
     Value *returnValue = this->expression->generateCode(context);
     context.setCurrentReturnValue(returnValue);
     return returnValue;
@@ -382,7 +410,9 @@ llvm::Value *AST_ReturnStatement::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_IfStatement::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating if statement" << endl;
+#endif
     Value *condValue = this->condition->generateCode(context);
     if (!condValue)
         return nullptr;
@@ -488,8 +518,9 @@ llvm::Value *AST_ForStatement::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_StructMember::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating struct member expression of " << this->id->name << "." << this->member->name << endl;
-
+#endif
     auto varPtr = context.getSymbolValue(this->id->name);
     auto structPtr = context.builder.CreateLoad(varPtr, "structPtr");
     structPtr->setAlignment(4);
@@ -512,8 +543,10 @@ llvm::Value *AST_StructMember::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_StructAssignment::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating struct assignment of " << this->structMember->id->name << "."
          << this->structMember->member->name << endl;
+#endif
     auto varPtr = context.getSymbolValue(this->structMember->id->name);
     auto structPtr = context.builder.CreateLoad(varPtr, "structPtr");
 
@@ -540,7 +573,9 @@ llvm::Value *AST_StructAssignment::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_ArrayIndex::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating array index expression of " << this->arrayName->name << endl;
+#endif
     auto varPtr = context.getSymbolValue(this->arrayName->name);
     auto type = context.getSymbolType(this->arrayName->name);
     string typeStr = type->name;
@@ -551,12 +586,16 @@ llvm::Value *AST_ArrayIndex::generateCode(CodeGenContext &context)
     ArrayRef<Value *> indices;
     if (context.isFuncArg(this->arrayName->name))
     {
+#ifdef IR_DEBUG
         cout << "isFuncArg" << endl;
+#endif
         varPtr = context.builder.CreateLoad(varPtr, "actualArrayPtr");
         // indices = { value };
     } else if (varPtr->getType()->isPointerTy())
     {
+#ifdef IR_DEBUG
         cout << this->arrayName->name << "Not isFuncArg" << endl;
+#endif
         // indices = { ConstantInt::get(Type::getInt64Ty(context.llvmContext), 0), value };
     } else
     {
@@ -569,7 +608,9 @@ llvm::Value *AST_ArrayIndex::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_ArrayAssignment::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating array index assignment of " << this->arrayIndex->arrayName->name << endl;
+#endif
     auto varPtr = context.getSymbolValue(this->arrayIndex->arrayName->name);
 
     if (varPtr == nullptr)
@@ -592,7 +633,9 @@ llvm::Value *AST_ArrayAssignment::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_ArrayInitialization::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
     cout << "Generating array initialization of " << this->declaration->id->name << endl;
+#endif
     auto arrayPtr = this->declaration->generateCode(context);
     auto sizeVec = context.getArraySize(this->declaration->id->name);
     // TODO: multi-dimension array initialization
@@ -619,7 +662,7 @@ llvm::Value *AST_Literal::generateCode(CodeGenContext &context)
  */
 std::unique_ptr<AST_Expression> LogError(const char *str)
 {
-    fprintf(stderr, "LogError: %s\n", str);
+    fprintf(stderr, "slang:\033[31m error:\033[0m %s\n", str);
     return nullptr;
 }
 

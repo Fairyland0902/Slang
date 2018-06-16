@@ -8,6 +8,18 @@
 					"name" : "AST_Identifier:int"
 				},
 				{
+					"name" : "AST_Identifier:printf"
+				}
+			],
+			"name" : "AST_FunctionDeclaration"
+		},
+		{
+			"children" : 
+			[
+				{
+					"name" : "AST_Identifier:int"
+				},
+				{
 					"name" : "AST_Identifier:main"
 				},
 				{
@@ -27,6 +39,24 @@
 								}
 							],
 							"name" : "AST_VariableDeclaration"
+						},
+						{
+							"children" : 
+							[
+								{
+									"children" : 
+									[
+										{
+											"name" : "AST_Identifier:printf"
+										},
+										{
+											"name" : "AST_Literal:\"hello\""
+										}
+									],
+									"name" : "AST_MethodCall"
+								}
+							],
+							"name" : "AST_ExpressionStatement"
 						},
 						{
 							"children" : 

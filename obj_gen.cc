@@ -13,12 +13,13 @@
 
 #include "IR.h"
 #include "obj_gen.h"
+#include "debug.h"
 
 using namespace llvm;
 
 void generateObj(CodeGenContext &context, const string &filename)
 {
-    // Initialize the target registry etc.
+//     Initialize the target registry etc.
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();
@@ -49,7 +50,6 @@ void generateObj(CodeGenContext &context, const string &filename)
 
     std::error_code EC;
     raw_fd_ostream dest(filename.c_str(), EC, sys::fs::F_None);
-//    raw_fd_ostream dest(filename.c_str(), EC, sys::fs::F_None);
 //    formatted_raw_ostream formattedRawOstream(dest);
 
     legacy::PassManager pass;
@@ -64,5 +64,7 @@ void generateObj(CodeGenContext &context, const string &filename)
     pass.run(*context.theModule.get());
     dest.flush();
 
+#ifdef OBJ_DEBUG
     outs() << "Object code wrote to " << filename.c_str() << "\n";
+#endif
 }
