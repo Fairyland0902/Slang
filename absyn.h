@@ -289,7 +289,7 @@ public:
 
     void print(std::string prefix) const override
     {
-        std::string nextPrefix = prefix + this->DELIMINATER;
+        std::string nextPrefix = prefix + this->PREFIX;
         std::cout << prefix << getTypeName() << DELIMINATER << op << std::endl;
 
         lhs->print(nextPrefix);

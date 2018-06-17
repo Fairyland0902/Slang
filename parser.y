@@ -55,11 +55,12 @@
 %token<string> ALIGNAS ALIGNOF ATOMIC GENERIC NORETURN STATIC_ASSERT THREAD_LOCAL
 
 %type <index> array_index
-%type <identifier> id primary_typename array_typename struct_typename type_specifier
+%type <identifier> id primary_typename struct_typename type_specifier
 %type <expression> constant string
 %type <expression> expression assignment_expression logical_or_expression logical_and_expression inclusive_or_expression exclusive_or_expression and_expression
 %type <expression> equality_expression relational_expression shift_expression additive_expression multiplicative_expression
 %type <expression> unary_expression postfix_expression primary_expression
+%type <variable_declaration> array_declaration
 %type <variable_declaration_list> parameter_list struct_declaration_list
 %type <expression_list> argument_expression_list
 %type <block> program translation_unit block
@@ -99,25 +100,25 @@ primary_typename
     | VOID      {$$ = new AST_Identifier(*$1); $$->isType = true; delete $1;}
     ;
 
-array_typename
-    : primary_typename '[' I_CONSTANT ']'   {$1->isArray = true; $1->arraySize->push_back(make_shared<AST_Integer>(atol($3->c_str()))); $$ = $1;}
-    | array_typename '[' I_CONSTANT ']'     {$1->arraySize->push_back(make_shared<AST_Integer>(atol($3->c_str()))); $$ = $1;}
-    ;
-
 struct_typename
     : STRUCT id {$2->isType = true; $$ = $2;}
     ;
 
 type_specifier
     : primary_typename  {$$ = $1;}
-    | array_typename    {$$ = $1;}
     | struct_typename   {$$ = $1;}
+    ;
+
+array_declaration
+    : type_specifier id '[' I_CONSTANT ']'  {$1->isArray = true; $1->arraySize->push_back(make_shared<AST_Integer>(atol($4->c_str()))); $$ = new AST_VariableDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), nullptr);}
+    | array_declaration '[' I_CONSTANT ']'  {$1->type->arraySize->push_back(make_shared<AST_Integer>(atol($3->c_str()))); $$ = $1;}
     ;
 
 variable_declaration
     : type_specifier id                                         {$$ = new AST_VariableDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), nullptr);}
     | type_specifier id '=' expression                          {$$ = new AST_VariableDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_Expression>($4));}
-    | type_specifier id '=' '{' argument_expression_list '}'    {$$ = new AST_ArrayInitialization(std::make_shared<AST_VariableDeclaration>(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), nullptr), std::shared_ptr<AST_ExpressionList>($5));}
+    | array_declaration                                         {$$ = $1;}
+    | array_declaration '=' '{' argument_expression_list '}'    {$$ = new AST_ArrayInitialization(std::shared_ptr<AST_VariableDeclaration>($1), std::shared_ptr<AST_ExpressionList>($4));}
     ;
 
 function_declaration
@@ -128,7 +129,7 @@ function_declaration
 parameter_list
     : /* none here */                           {$$ = new AST_VariableList();}
     | variable_declaration                      {$$ = new AST_VariableList(); $$->push_back(std::shared_ptr<AST_VariableDeclaration>($<variable_declaration>1));}
-    | parameter_list ',' variable_declaration   {$1->push_back(std::shared_ptr<AST_VariableDeclaration>($<variable_declaration>3));}
+    | parameter_list ',' variable_declaration   {$1->push_back(std::shared_ptr<AST_VariableDeclaration>($<variable_declaration>3)); $$ = $1;}
     ;
 
 struct_declaration
@@ -275,7 +276,7 @@ array_index
 argument_expression_list
     : /* none here */                           {$$ = new AST_ExpressionList();}
     | expression                                {$$ = new AST_ExpressionList(); $$->push_back(std::shared_ptr<AST_Expression>($1));}
-    | argument_expression_list ',' expression   {$1->push_back(std::shared_ptr<AST_Expression>($3));}
+    | argument_expression_list ',' expression   {$1->push_back(std::shared_ptr<AST_Expression>($3)); $$ = $1;}
     ;
 
 %%
