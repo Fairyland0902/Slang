@@ -10,6 +10,8 @@
 
 extern int yyparse();
 
+extern int yyerror_number;
+
 extern std::shared_ptr<AST_Block> programBlock;
 
 std::istream *lexer_ins_;
@@ -43,9 +45,9 @@ void Driver::parse_helper(std::istream &stream)
 
     lexer_ins_ = &stream;
 
-    if (yyparse() != accept)
+    if (yyparse() != accept || yyerror_number > 0)
     {
-        fprintf(stderr, "slang:\033[31m error:\033[0m parse failed\n");
+        fprintf(stderr, "%d errors generated.\n", yyerror_number);
         exit(EXIT_FAILURE);
     }
 

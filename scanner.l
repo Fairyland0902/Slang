@@ -64,7 +64,7 @@ extern std::istream* lexer_ins_;
   }
 %}
 
-%option debug
+/* %option debug */
 
 %%
 "/*"                                { count_col(); comment(); }

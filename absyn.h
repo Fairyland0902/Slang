@@ -8,6 +8,8 @@
 #include <memory>
 #include <string>
 
+#include "debug.h"
+
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -443,7 +445,10 @@ public:
             id(id),
             assignmentExpr(assignmentExpr)
     {
-        std::cout << "isArray = " << type->isArray << std::endl;
+#ifdef AST_DEBUG
+        std::cout << "isType = " << std::boolalpha << type->isType << std::endl;
+        std::cout << "isArray = " << std::boolalpha << type->isArray << std::endl;
+#endif
         assert(type->isType);
         assert(!type->isArray || (type->isArray && type->arraySize != nullptr));
     }

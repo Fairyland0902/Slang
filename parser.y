@@ -10,10 +10,13 @@
     extern int yycol;
     extern const char* yyfile;
 
+    int yyerror_number = 0;
+
     void yyerror(const char *s)
     {
     	fflush(stdout);
-    	fprintf(stderr, "%s:%d:%d:\033[31m error:\033[0m %s\n", yyfile, yyrow, yycol, s);
+    	fprintf(stderr, "\033[1m%s:%d:%d:\033[1;31m error: \033[0m", yyfile, yyrow, yycol);
+    	fprintf(stderr, "\033[1m%s\033[0m\n", s);
     }
 %}
 
@@ -89,6 +92,7 @@ statement
     | selection_statement       {$$ = $1;}
     | iteration_statement       {$$ = $1;}
     | jump_statement            {$$ = $1;}
+    | error ';'                 {yyerror_number++; yyerrok; yyclearin;}
     ;
 
 primary_typename
