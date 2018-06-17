@@ -817,8 +817,7 @@ public:
 
     AST_ArrayIndex(shared_ptr<AST_Identifier> name, shared_ptr<AST_ExpressionList> list)
             : arrayName(name), expressions(list)
-    {
-    }
+    {}
 
     std::string getTypeName() const override
     {

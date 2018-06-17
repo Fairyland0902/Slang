@@ -81,7 +81,7 @@ void CodeGenContext::generateCode(AST_Block &root)
 llvm::Value *AST_Assignment::generateCode(CodeGenContext &context)
 {
 #ifdef IR_DEBUG
-    std::cout << "Generating assignment of " << this->lhs->name << " = " << std::endl;
+    std::cout << "Generating assignment of " << this->lhs->name << std::endl;
 #endif
     Value *dst = context.getSymbolValue(this->lhs->name);
     auto dstType = context.getSymbolType(this->lhs->name);
@@ -467,6 +467,9 @@ llvm::Value *AST_IfStatement::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_ForStatement::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
+    std::cout << "Generating for statement" << std::endl;
+#endif
     Function *theFunction = context.builder.GetInsertBlock()->getParent();
 
     BasicBlock *block = BasicBlock::Create(context.llvmContext, "forloop", theFunction);
@@ -628,7 +631,7 @@ llvm::Value *AST_ArrayInitialization::generateCode(CodeGenContext &context)
     // @TODO: multi-dimension array initialization
     assert(sizeVec.size() == 1);
 
-    for (int index = 0; index < this->expressionList->size(); index++)
+    for (size_t index = 0; index < this->expressionList->size(); index++)
     {
         shared_ptr<AST_Integer> indexValue = make_shared<AST_Integer>(index);
 
@@ -641,6 +644,9 @@ llvm::Value *AST_ArrayInitialization::generateCode(CodeGenContext &context)
 
 llvm::Value *AST_Literal::generateCode(CodeGenContext &context)
 {
+#ifdef IR_DEBUG
+    std::cout << "Generating string literal: " << this->value << std::endl;
+#endif
     return context.builder.CreateGlobalString(this->value, "string");
 }
 

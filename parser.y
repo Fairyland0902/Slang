@@ -137,8 +137,8 @@ struct_declaration
     ;
 
 struct_declaration_list
-    : variable_declaration                              {$$ = new AST_VariableList(); $$->push_back(std::shared_ptr<AST_VariableDeclaration>($<variable_declaration>1));}
-    | struct_declaration_list ';' variable_declaration  {$1->push_back(std::shared_ptr<AST_VariableDeclaration>($<variable_declaration>3));}
+    : variable_declaration ';'                          {$$ = new AST_VariableList(); $$->push_back(std::shared_ptr<AST_VariableDeclaration>($<variable_declaration>1));}
+    | struct_declaration_list variable_declaration ';'  {$1->push_back(std::shared_ptr<AST_VariableDeclaration>($<variable_declaration>2)); $$ = $1;}
     ;
 
 expression_statement
