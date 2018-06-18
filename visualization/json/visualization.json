@@ -1,0 +1,126 @@
+{
+  "children": [
+    {
+      "children": [
+        {
+          "name": "AST_Identifier:int"
+        },
+        {
+          "name": "AST_Identifier:main"
+        },
+        {
+          "children": [
+            {
+              "children": [
+                {
+                  "name": "AST_Identifier:int"
+                },
+                {
+                  "name": "AST_Identifier:x"
+                }
+              ],
+              "name": "AST_VariableDeclaration"
+            },
+            {
+              "children": [
+                {
+                  "name": "AST_Identifier:int"
+                },
+                {
+                  "name": "AST_Identifier:y"
+                }
+              ],
+              "name": "AST_VariableDeclaration"
+            },
+            {
+              "children": [
+                {
+                  "name": "AST_Identifier:int"
+                },
+                {
+                  "name": "AST_Identifier:z"
+                }
+              ],
+              "name": "AST_VariableDeclaration"
+            },
+            {
+              "children": [
+                {
+                  "children": [
+                    {
+                      "name": "AST_Identifier:x"
+                    },
+                    {
+                      "name": "AST_Integer:12"
+                    }
+                  ],
+                  "name": "AST_Assignment"
+                }
+              ],
+              "name": "AST_ExpressionStatement"
+            },
+            {
+              "children": [
+                {
+                  "children": [
+                    {
+                      "name": "AST_Identifier:y"
+                    },
+                    {
+                      "children": [
+                        {
+                          "name": "AST_Identifier:x"
+                        },
+                        {
+                          "name": "AST_Integer:22"
+                        }
+                      ],
+                      "name": "AST_BinaryOperator:279"
+                    }
+                  ],
+                  "name": "AST_Assignment"
+                }
+              ],
+              "name": "AST_ExpressionStatement"
+            },
+            {
+              "children": [
+                {
+                  "children": [
+                    {
+                      "name": "AST_Identifier:z"
+                    },
+                    {
+                      "children": [
+                        {
+                          "name": "AST_Identifier:y"
+                        },
+                        {
+                          "name": "AST_Integer:33"
+                        }
+                      ],
+                      "name": "AST_BinaryOperator:279"
+                    }
+                  ],
+                  "name": "AST_Assignment"
+                }
+              ],
+              "name": "AST_ExpressionStatement"
+            },
+            {
+              "children": [
+                {
+                  "name": "AST_Integer:0"
+                }
+              ],
+              "name": "AST_ReturnStatement"
+            }
+          ],
+          "name": "AST_Block"
+        }
+      ],
+      "name": "AST_FunctionDeclaration"
+    }
+  ],
+  "name": "AST_Block"
+}
