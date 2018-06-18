@@ -9,8 +9,6 @@
 #define ISTYPE(value, id) (value->getType()->getTypeID() == id)
 
 extern std::string OptimizationLevel;
-extern std::string OutputFile;
-extern bool EmitIR;
 
 /*
  * @TODO:
@@ -82,19 +80,8 @@ void CodeGenContext::generateCode(AST_Block &root)
 #ifdef OBJ_DEBUG
     passManager.add(createPrintModulePass(outs()));
 #endif
-    std::error_code EC;
-    raw_fd_ostream dest(OutputFile.c_str(), EC, sys::fs::F_None);
-    if (EmitIR)
-    {
-        passManager.add(createPrintModulePass(dest));
-    }
 
     passManager.run(*(this->theModule));
-
-    if (EmitIR)
-    {
-        dest.flush();
-    }
 }
 
 llvm::Value *AST_Assignment::generateCode(CodeGenContext &context)

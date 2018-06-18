@@ -13,9 +13,6 @@ extern int yyparse();
 extern int yynerrs;
 extern bool emptyFile;
 extern bool DontLink;
-extern bool EmitASM;
-extern bool EmitBC;
-extern bool EmitIR;
 extern std::string OutputFile;
 extern std::shared_ptr<AST_Block> programBlock;
 std::istream *lexer_ins_;
@@ -69,10 +66,7 @@ void Driver::parse_helper(std::istream &stream)
         context.generateCode(*programBlock);
         if (DontLink)
         {
-            if (!(EmitASM || EmitBC || EmitIR))
-            {
-                generateObj(context, OutputFile);
-            }
+            generateObj(context, OutputFile);
         } else
         {
             generateObj(context);

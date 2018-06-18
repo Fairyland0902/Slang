@@ -15,7 +15,6 @@ bool EmitASM = false;
 bool EmitBC = false;
 std::string OptimizationLevel = "-O0";
 std::string OutputFile;
-bool OutputName = false;
 std::string Prefix;
 
 void showHelpInfo()
@@ -43,6 +42,7 @@ int main(int argc, char **argv)
         }
         // Parse from command line input.
         bool EmitLLVM = false;
+        bool OutputName = false;
         std::string InputFile;
         for (int i = 1; i < argc; i++)
         {

@@ -1,3 +1,4 @@
+#include <llvm/IR/IRPrintingPasses.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Host.h>
 #include <llvm/Support/raw_ostream.h>
@@ -16,6 +17,8 @@
 #include "debug.h"
 
 using namespace llvm;
+
+extern bool EmitIR;
 
 void generateObj(CodeGenContext &context, const std::string &filename)
 {
@@ -48,23 +51,33 @@ void generateObj(CodeGenContext &context, const std::string &filename)
     context.theModule->setDataLayout(theTargetMachine->createDataLayout());
     context.theModule->setTargetTriple(targetTriple);
 
+    legacy::PassManager pass;
     std::error_code EC;
     raw_fd_ostream dest(filename.c_str(), EC, sys::fs::F_None);
 //    formatted_raw_ostream formattedRawOstream(dest);
 
-    legacy::PassManager pass;
-    auto fileType = TargetMachine::CGFT_ObjectFile;
-
-    if (theTargetMachine->addPassesToEmitFile(pass, dest, fileType))
+    if (EmitIR)
     {
-        errs() << "theTargetMachine can't emit a file of this type";
+        // Generate IR code file.
+        pass.add(createPrintModulePass(dest));
+        pass.run(*context.theModule);
+        dest.flush();
         return;
-    }
+    } else
+    {
+        // Generate obj file.
+        auto fileType = TargetMachine::CGFT_ObjectFile;
 
-    pass.run(*context.theModule);
-    dest.flush();
+        if (theTargetMachine->addPassesToEmitFile(pass, dest, fileType))
+        {
+            errs() << "theTargetMachine can't emit a file of this type";
+            return;
+        }
+        pass.run(*context.theModule);
+        dest.flush();
 
 #ifdef OBJ_DEBUG
-    outs() << "Object code wrote to " << filename.c_str() << "\n";
+        outs() << "Object code wrote to " << filename.c_str() << "\n";
 #endif
+    }
 }
