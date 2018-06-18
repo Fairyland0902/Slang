@@ -25,6 +25,8 @@ public:
 
 private:
     void parse_helper(std::istream &stream);
+
+    std::string filename;
 };
 
 #endif //SLANG_DRIVER_H

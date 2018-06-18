@@ -7,7 +7,6 @@ class Optimizer
 {
 public:
     Optimizer() :
-            DisableInline(true),
             OptimizationLevel(0),
             DontVerify(true),
             VerifyEach(false)
@@ -18,7 +17,6 @@ public:
     void addStandardCompilePasses(llvm::legacy::PassManager &PM);
 
     int OptimizationLevel;
-    bool DisableInline;
     bool DontVerify;
     bool VerifyEach;
 

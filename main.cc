@@ -9,12 +9,13 @@ const char *yyfile;
 extern bool emptyFile;
 extern std::shared_ptr<AST_Block> programBlock;
 
-bool DonotLink = false;
+bool DontLink = false;
 bool EmitIR = false;
 bool EmitASM = false;
 bool EmitBC = false;
 std::string OptimizationLevel = "-O0";
 std::string OutputFile;
+bool OutputName = false;
 std::string Prefix;
 
 void showHelpInfo()
@@ -42,13 +43,12 @@ int main(int argc, char **argv)
         }
         // Parse from command line input.
         bool EmitLLVM = false;
-        bool OutputName = false;
         std::string InputFile;
         for (int i = 1; i < argc; i++)
         {
             if (strcmp(argv[i], "-c") == 0)
             {
-                DonotLink = true;
+                DontLink = true;
             } else if (strcmp(argv[i], "-o") == 0)
             {
                 OutputFile = std::string(argv[i + 1]);
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
                 i++;
             } else if (strcmp(argv[i], "-S") == 0)
             {
-                DonotLink = true;
+                DontLink = true;
                 EmitASM = true;
             } else if (strcmp(argv[i], "-emit-llvm") == 0)
             {
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
             }
         }
 
-        if (EmitLLVM && DonotLink)
+        if (EmitLLVM && DontLink)
         {
             if (EmitASM)
             {
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
             {
                 EmitBC = true;
             }
-        } else if (EmitLLVM && !DonotLink)
+        } else if (EmitLLVM && !DontLink)
         {
             fprintf(stderr, "slang:\033[1;31m error:\033[0m -emit-llvm cannot be used when linking\n");
             exit(EXIT_FAILURE);
@@ -93,9 +93,21 @@ int main(int argc, char **argv)
         if (!OutputName)
         {
             // Give output file its default name.
-            if (DonotLink)
+            if (DontLink)
             {
-                OutputFile = Prefix + ".o";
+                if (EmitASM)
+                {
+                    OutputFile = Prefix + ".s";
+                } else if (EmitBC)
+                {
+                    OutputFile = Prefix + ".bc";
+                } else if (EmitIR)
+                {
+                    OutputFile = Prefix + ".ll";
+                } else
+                {
+                    OutputFile = Prefix + ".o";
+                }
             } else
             {
                 OutputFile = "a.out";
@@ -120,7 +132,7 @@ int main(int argc, char **argv)
         if (!emptyFile)
         {
             // You may need to link obj files manually here.
-            if (!DonotLink)
+            if (!DontLink)
             {
                 std::string command = std::string("clang") + " output.o -o " + OutputFile;
                 system(command.c_str());
