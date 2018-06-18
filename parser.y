@@ -5,12 +5,11 @@
     #include "absyn.h"
 
     AST_Block* programBlock;
+    bool emptyFile;
     extern int yylex();
     extern int yyrow;
     extern int yycol;
     extern const char* yyfile;
-
-    int yyerror_number = 0;
 
     void yyerror(const char *s)
     {
@@ -76,7 +75,8 @@
 %%
 
 program
-    : translation_unit {programBlock = $1;}
+    : /* empty file */ {emptyFile = true; return 0;}
+    | translation_unit {programBlock = $1;}
     ;
 
 translation_unit
@@ -92,7 +92,7 @@ statement
     | selection_statement       {$$ = $1;}
     | iteration_statement       {$$ = $1;}
     | jump_statement            {$$ = $1;}
-    | error ';'                 {yyerror_number++; yyerrok; yyclearin;}
+    | error ';'                 {yyerrok; yyclearin;}
     ;
 
 primary_typename

@@ -29,7 +29,7 @@ public:
     BasicBlock *block;
     Value *returnValue;
     std::map<string, Value *> locals;
-    // Type name string of vars.
+    // Type name string of variables.
     std::map<string, shared_ptr<AST_Identifier>> types;
     std::map<string, bool> isFuncArg;
     std::map<string, std::vector<uint64_t>> arraySizes;
@@ -49,10 +49,10 @@ public:
 
     CodeGenContext() : builder(llvmContext), typeSystem(llvmContext)
     {
-        theModule = unique_ptr<Module>(new Module("main", this->llvmContext));
+        theModule = std::unique_ptr<Module>(new Module("main", this->llvmContext));
     }
 
-    Value *getSymbolValue(std::string name) const
+    Value *getSymbolValue(const std::string &name) const
     {
         for (auto it = blockStack.rbegin(); it != blockStack.rend(); it++)
         {
@@ -64,7 +64,7 @@ public:
         return nullptr;
     }
 
-    shared_ptr<AST_Identifier> getSymbolType(std::string name) const
+    shared_ptr<AST_Identifier> getSymbolType(const std::string &name) const
     {
         for (auto it = blockStack.rbegin(); it != blockStack.rend(); it++)
         {
@@ -76,7 +76,7 @@ public:
         return nullptr;
     }
 
-    bool isFuncArg(std::string name) const
+    bool isFuncArg(const std::string &name) const
     {
         for (auto it = blockStack.rbegin(); it != blockStack.rend(); it++)
         {
@@ -88,20 +88,20 @@ public:
         return false;
     }
 
-    void setSymbolValue(std::string name, Value *value)
+    void setSymbolValue(const std::string &name, Value *value)
     {
         blockStack.back()->locals[name] = value;
     }
 
-    void setSymbolType(std::string name, shared_ptr<AST_Identifier> value)
+    void setSymbolType(const std::string &name, shared_ptr<AST_Identifier> value)
     {
         blockStack.back()->types[name] = value;
     }
 
-    void setFuncArg(std::string name, bool value)
+    void setFuncArg(const std::string &name, bool value)
     {
 #ifdef IR_DEBUG
-        std::cout << "Set " << name << " as func arg" << std::endl;
+        std::cout << "Setting " << name << " as function arguments" << std::endl;
 #endif
         blockStack.back()->isFuncArg[name] = value;
     }
@@ -136,15 +136,21 @@ public:
         return blockStack.back()->returnValue;
     }
 
-    void setArraySize(string name, std::vector<uint64_t> value)
+    void setArraySize(const std::string &name, std::vector<uint64_t> value)
     {
 #ifdef IR_DEBUG
-        std::cout << "setArraySize: " << name << ": " << value.size() << std::endl;
+        std::cout << "[ARRAY DIMENSION]" << name << ": " << value.size() << std::endl;
+        std::cout << "[ARRAY SIZE     ]" << name << ": ";
+        for (auto &v: value)
+        {
+            std::cout << v << " ";
+        }
+        std::cout << std::endl;
 #endif
         blockStack.back()->arraySizes[name] = value;
     }
 
-    std::vector<uint64_t> getArraySize(string name)
+    std::vector<uint64_t> getArraySize(const std::string &name)
     {
         for (auto it = blockStack.rbegin(); it != blockStack.rend(); it++)
         {
@@ -177,6 +183,6 @@ public:
 
 Value *LogErrorV(const char *str);
 
-Value *LogErrorV(string str);
+Value *LogErrorV(const std::string &str);
 
 #endif // SLANG_IR_H

@@ -67,8 +67,8 @@ extern std::istream* lexer_ins_;
 /* %option debug */
 
 %%
-"/*"                                { count_col(); comment(); }
-"//".*                              { count_row(); /* consume //-comment */ }
+"/*".*"*/"                          { count_col(); comment(); }
+"//".*                              { /* consume //-comment */ }
 
 "auto"                              { count_col(); return TOKEN(AUTO); }
 "break"                             { count_col(); return TOKEN(BREAK); }
@@ -82,7 +82,7 @@ extern std::istream* lexer_ins_;
 "else"                              { count_col(); return TOKEN(ELSE); }
 "enum"                              { count_col(); return TOKEN(ENUM); }
 "extern"                            { count_col(); SAVE_TOKEN; return (EXTERN); }
-"float"                             { count_col(); SAVE_TOKEN; return(FLOAT); }
+"float"                             { count_col(); SAVE_TOKEN; return (FLOAT); }
 "for"                               { count_col(); return TOKEN(FOR); }
 "goto"                              { count_col(); return TOKEN(GOTO); }
 "if"                                { count_col(); return TOKEN(IF); }
@@ -95,7 +95,7 @@ extern std::istream* lexer_ins_;
 "short"                             { count_col(); SAVE_TOKEN; return (SHORT); }
 "signed"                            { count_col(); SAVE_TOKEN; return (SIGNED); }
 "sizeof"                            { count_col(); return TOKEN(SIZEOF); }
-"static"                            { count_col(); SAVE_TOKEN; return(STATIC); }
+"static"                            { count_col(); SAVE_TOKEN; return (STATIC); }
 "struct"                            { count_col(); return TOKEN(STRUCT); }
 "switch"                            { count_col(); return TOKEN(SWITCH); }
 "typedef"                           { count_col(); SAVE_TOKEN; return (TYPEDEF); }
@@ -192,24 +192,24 @@ int yywrap(void)        /* called at end of input */
 
 static void comment(void)
 {
-	char c, prev = 0;
+    int i;
 
-	while (std::cin >> c)      /* (EOF maps to 0) */
-	{
-		if (c == '/' && prev == '*')
+    for (i = 0; yytext[i] != '\0'; i++)
+    {
+        if (yytext[i] == '\n')
         {
-            count_col();
-            return;
+            yyrow++;
+            yycol = 1;
         }
-		prev = c;
-		if (c == '\n')
-		{
-		    count_row();
-		}
-		count_col();
-	}
-
-    yyerror("unterminated comment");
+        else if (yytext[i] == '\t')
+        {
+            yycol += 4 - (yycol % 4);
+        }
+        else
+        {
+            yycol++;
+        }
+    }
 }
 
 void count_col(void)
@@ -220,7 +220,7 @@ void count_col(void)
     {
         if (yytext[i] == '\t')
         {
-            yycol += 8 - (yycol % 8);
+            yycol += 4 - (yycol % 4);
         }
         else
         {

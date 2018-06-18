@@ -129,7 +129,7 @@ llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
         return nullptr;
     }
 #ifdef IR_DEBUG
-    std::cout << "fp = " << (fp ? "true" : "false") << std::endl;
+    std::cout << "fp = " << std::boolalpha << fp << std::endl;
     std::cout << "L is " << TypeSystem::llvmTypeToStr(L) << std::endl;
     std::cout << "R is " << TypeSystem::llvmTypeToStr(R) << std::endl;
 #endif
@@ -190,7 +190,7 @@ llvm::Value *AST_Block::generateCode(CodeGenContext &context)
 llvm::Value *AST_Integer::generateCode(CodeGenContext &context)
 {
 #ifdef IR_DEBUG
-    std::cout << "Generating Integer: " << this->value << std::endl;
+    std::cout << "Generating integer: " << this->value << std::endl;
 #endif
     return ConstantInt::get(Type::getInt32Ty(context.llvmContext), this->value, true);
 }
@@ -198,7 +198,7 @@ llvm::Value *AST_Integer::generateCode(CodeGenContext &context)
 llvm::Value *AST_Double::generateCode(CodeGenContext &context)
 {
 #ifdef IR_DEBUG
-    std::cout << "Generating Double: " << this->value << std::endl;
+    std::cout << "Generating double: " << this->value << std::endl;
 #endif
     return ConstantFP::get(Type::getDoubleTy(context.llvmContext), this->value);
 }
@@ -660,7 +660,7 @@ std::unique_ptr<AST_Expression> LogError(const char *str)
     return nullptr;
 }
 
-Value *LogErrorV(string str)
+Value *LogErrorV(const std::string &str)
 {
     return LogErrorV(str.c_str());
 }

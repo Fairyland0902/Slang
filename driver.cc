@@ -10,7 +10,9 @@
 
 extern int yyparse();
 
-extern int yyerror_number;
+extern int yynerrs;
+
+extern bool emptyFile;
 
 extern std::shared_ptr<AST_Block> programBlock;
 
@@ -25,6 +27,8 @@ void Driver::parse(std::string filename)
     std::ifstream infile(filename);
     if (!infile.good())
     {
+        fprintf(stderr, "slang:\033[1;31m error:\033[0m no such file or directory: \'%s\'\n", filename.c_str());
+        fprintf(stderr, "slang:\033[1;31m error:\033[0m no input files\n");
         exit(EXIT_FAILURE);
     }
     parse_helper(infile);
@@ -45,18 +49,21 @@ void Driver::parse_helper(std::istream &stream)
 
     lexer_ins_ = &stream;
 
-    if (yyparse() != accept || yyerror_number > 0)
+    if (yyparse() != accept || yynerrs > 0)
     {
-        fprintf(stderr, "%d errors generated.\n", yyerror_number);
+        fprintf(stderr, "%d errors generated.\n", yynerrs);
         exit(EXIT_FAILURE);
     }
 
+    if (!emptyFile)
+    {
 #ifdef AST_DEBUG
-    std::cout << programBlock << std::endl;
-    programBlock->print("--");
+        std::cout << programBlock << std::endl;
+        programBlock->print("--");
 #endif
 
-    CodeGenContext context;
-    context.generateCode(*programBlock);
-    generateObj(context);
+        CodeGenContext context;
+        context.generateCode(*programBlock);
+        generateObj(context);
+    }
 }

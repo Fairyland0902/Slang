@@ -61,7 +61,7 @@ void generateObj(CodeGenContext &context, const string &filename)
         return;
     }
 
-    pass.run(*context.theModule.get());
+    pass.run(*context.theModule);
     dest.flush();
 
 #ifdef OBJ_DEBUG

@@ -5,6 +5,7 @@
 #include "driver.h"
 
 const char *yyfile;
+extern bool emptyFile;
 extern std::shared_ptr<AST_Block> programBlock;
 
 int main(int argc, char **argv)
@@ -16,21 +17,24 @@ int main(int argc, char **argv)
         Driver driver;
         yyfile = argv[1];
         driver.parse(argv[1]);
-        // You may need to link obj files manually here.
-        system("clang output.o -o a.out");
-
-        // Visualization.
-        auto root = programBlock->generateJson();
-        std::string jsonFile = "../visualization/visualization.json";
-        std::ofstream os(jsonFile);
-        if (os.is_open())
+        if (!emptyFile)
         {
-            os << root;
-            os.close();
+            // You may need to link obj files manually here.
+            system("clang output.o -o a.out");
+
+            // Visualization.
+            auto root = programBlock->generateJson();
+            std::string jsonFile = "../visualization/visualization.json";
+            std::ofstream os(jsonFile);
+            if (os.is_open())
+            {
+                os << root;
+                os.close();
+            }
         }
     } else
     {
-        fprintf(stderr, "slang:\033[31m error:\033[0m no input files\n");
+        fprintf(stderr, "slang:\033[1;31m error:\033[0m no input files\n");
         exit(EXIT_FAILURE);
     }
 

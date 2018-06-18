@@ -1,32 +1,11 @@
-extern int printf(char format);
-
-extern int puts(char s);
-
-int func(int a, int b)
+int main()
 {
-    int res = 0;
-    if (a <= 1)
-    {
-        res = 1;
-    } else if (1)
-    {
-        res = func(a - 1, b) + func(a - 2, b);
-    } else
-    {
-        res = func(b, a);
-    }
-    return res;
-}
+    int x;
+    int y;
+    int z;
 
-int main(int argc, char[1] argv)
-{
-    int i;
-    argc = 5;
-    for (i = 1; i < argc; i = i + 1)
-    {
-        printf("i=%d, func=%d", i, func(i, argc));
-        puts("");
-    }
-
+    x = 12;
+    y = x + 22;  /* load value of x that was just stored */
+    z = y + 33;  /* load value of y that was just stored */
     return 0;
 }
