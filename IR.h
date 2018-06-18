@@ -47,9 +47,9 @@ public:
     SymTable globalVars;
     TypeSystem typeSystem;
 
-    CodeGenContext() : builder(llvmContext), typeSystem(llvmContext)
+    CodeGenContext(std::string filename) : builder(llvmContext), typeSystem(llvmContext)
     {
-        theModule = std::unique_ptr<Module>(new Module("main", this->llvmContext));
+        theModule = std::unique_ptr<Module>(new Module(filename, this->llvmContext));
     }
 
     Value *getSymbolValue(const std::string &name) const

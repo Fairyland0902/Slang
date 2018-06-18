@@ -4,6 +4,6 @@
 #include <string>
 #include "IR.h"
 
-void generateObj(CodeGenContext &context, const string &filename = "output.o");
+void generateObj(CodeGenContext &context, const std::string &filename = "output.o");
 
 #endif //SLANG_OBJ_GEN_H
