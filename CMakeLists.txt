@@ -39,7 +39,9 @@ set(SOURCE_FILES
         IR.cc
         obj_gen.h
         obj_gen.cc
-        debug.h)
+        debug.h
+        optimize.h
+        optimize.cc)
 add_executable(Slang ${SOURCE_FILES})
 
 llvm_map_components_to_libnames(llvm_libs all)

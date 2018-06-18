@@ -17,7 +17,7 @@
 
 using namespace llvm;
 
-void generateObj(CodeGenContext &context, const string &filename)
+void generateObj(CodeGenContext &context, const std::string &filename)
 {
 //     Initialize the target registry etc.
     InitializeAllTargetInfos();

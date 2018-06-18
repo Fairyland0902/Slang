@@ -1,14 +1,13 @@
-#include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/IRPrintingPasses.h>
-#include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
-#include <llvm/IR/Module.h>
-#include <llvm/IR/Value.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Support/raw_ostream.h>
 #include "IR.h"
+#include "optimize.h"
 
-using legacy::PassManager;
 #define ISTYPE(value, id) (value->getType()->getTypeID() == id)
+
+extern std::string OptimizationLevel;
 
 /*
  * @TODO:
@@ -70,12 +69,17 @@ void CodeGenContext::generateCode(AST_Block &root)
     Value *retValue = root.generateCode(*this);
     popBlock();
 #ifdef IR_DEBUG
-    std::cout << "Code generate success" << std::endl;
+    std::cout << "Generating code success" << std::endl;
 #endif
-    PassManager passManager;
+    legacy::PassManager passManager;
+    Optimizer optimizer;
+    optimizer.OptimizationLevel = atoi(&OptimizationLevel.back());
+//    std::cout << optimizer.OptimizationLevel << std::endl;
+    optimizer.addStandardCompilePasses(passManager);
+#ifdef OBJ_DEBUG
     passManager.add(createPrintModulePass(outs()));
-    passManager.run(*(this->theModule.get()));
-    return;
+#endif
+    passManager.run(*(this->theModule));
 }
 
 llvm::Value *AST_Assignment::generateCode(CodeGenContext &context)

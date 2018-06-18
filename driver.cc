@@ -11,11 +11,10 @@
 extern int yyparse();
 
 extern int yynerrs;
-
 extern bool emptyFile;
-
+extern bool DonotLink;
+extern std::string OutputFile;
 extern std::shared_ptr<AST_Block> programBlock;
-
 std::istream *lexer_ins_;
 
 Driver::~Driver() = default;
@@ -64,6 +63,12 @@ void Driver::parse_helper(std::istream &stream)
 
         CodeGenContext context;
         context.generateCode(*programBlock);
-        generateObj(context);
+        if (DonotLink)
+        {
+            generateObj(context, OutputFile);
+        } else
+        {
+            generateObj(context);
+        }
     }
 }
