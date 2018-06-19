@@ -49,6 +49,6 @@ if (APPLE)
     target_link_libraries(Slang ${llvm_libs} ${JSONCPP_LIBRARIES})
 endif ()
 if (UNIX AND NOT APPLE)
-    target_link_libraries(Slang $LLVM ${JSONCPP_LIBRARIES})
+    target_link_libraries(Slang LLVM ${JSONCPP_LIBRARIES})
 endif ()
 
