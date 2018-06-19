@@ -22,18 +22,23 @@ extern bool EmitIR;
 
 void generateObj(CodeGenContext &context, const std::string &filename)
 {
-//     Initialize the target registry etc.
+    // Initialize the target registry etc.
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();
     InitializeAllAsmParsers();
     InitializeAllAsmPrinters();
 
-    auto targetTriple = sys::getDefaultTargetTriple();
-    context.theModule->setTargetTriple(targetTriple);
+    auto TargetTriple = sys::getDefaultTargetTriple();
+    context.theModule->setTargetTriple(TargetTriple);
 
+    /*
+     * Print an error and exit if we couldn't find the requested target.
+     * This generally occurs if we've forgotten to initialise the
+     * TargetRegistry or we have a bogus target triple.
+     */
     std::string error;
-    auto Target = TargetRegistry::lookupTarget(targetTriple, error);
+    auto Target = TargetRegistry::lookupTarget(TargetTriple, error);
 
     if (!Target)
     {
@@ -46,15 +51,21 @@ void generateObj(CodeGenContext &context, const std::string &filename)
 
     TargetOptions opt;
     auto RM = Optional<Reloc::Model>();
-    auto theTargetMachine = Target->createTargetMachine(targetTriple, CPU, features, opt, RM);
+    auto TargetMachine = Target->createTargetMachine(TargetTriple, CPU, features, opt, RM);
 
-    context.theModule->setDataLayout(theTargetMachine->createDataLayout());
-    context.theModule->setTargetTriple(targetTriple);
+    context.theModule->setDataLayout(TargetMachine->createDataLayout());
+    context.theModule->setTargetTriple(TargetTriple);
 
     legacy::PassManager pass;
     std::error_code EC;
     raw_fd_ostream dest(filename.c_str(), EC, sys::fs::F_None);
 //    formatted_raw_ostream formattedRawOstream(dest);
+
+    if (EC)
+    {
+        errs() << "Could not open file: " << EC.message();
+        return;
+    }
 
     if (EmitIR)
     {
@@ -65,12 +76,11 @@ void generateObj(CodeGenContext &context, const std::string &filename)
         return;
     } else
     {
-        // Generate obj file.
         auto fileType = TargetMachine::CGFT_ObjectFile;
 
-        if (theTargetMachine->addPassesToEmitFile(pass, dest, fileType))
+        if (TargetMachine->addPassesToEmitFile(pass, dest, fileType))
         {
-            errs() << "theTargetMachine can't emit a file of this type";
+            errs() << "TargetMachine can't emit a file of this type";
             return;
         }
         pass.run(*context.theModule);
