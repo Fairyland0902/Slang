@@ -2,11 +2,11 @@
 #include <cassert>
 #include <cctype>
 #include <iostream>
-#include "driver.h"
-#include "absyn.h"
 #include "IR.h"
-#include "obj_gen.h"
+#include "absyn.h"
 #include "debug.h"
+#include "driver.h"
+#include "target_gen.h"
 
 extern int yyparse();
 
@@ -66,10 +66,10 @@ void Driver::parse_helper(std::istream &stream)
         context.generateCode(*programBlock);
         if (DontLink)
         {
-            generateObj(context, OutputFile);
+            generateTarget(context, OutputFile);
         } else
         {
-            generateObj(context);
+            generateTarget(context);
         }
     }
 }

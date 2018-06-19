@@ -18,5 +18,6 @@ int main()
     puts("");
     printf("z = %d", z);
     puts("");
+
     return 0;
 }

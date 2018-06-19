@@ -20,7 +20,7 @@ std::string Prefix;
 
 void showHelpInfo()
 {
-    std::cout << "OVERVIEW: Small cLANG LLVM compiler\n" << std::endl;
+    std::cout << "OVERVIEW: Small C Language LLVM compiler\n" << std::endl;
     std::cout << "USAGE: slang [options] <inputs>\n" << std::endl;
     std::cout << "OPTIONS:" << std::endl;
     std::cout << "  " << std::setw(16) << std::left << "-c" << "Only run preprocess, compile, and assemble steps"

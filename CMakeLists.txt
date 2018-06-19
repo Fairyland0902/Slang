@@ -37,8 +37,8 @@ set(SOURCE_FILES
         type.cc
         IR.h
         IR.cc
-        obj_gen.h
-        obj_gen.cc
+        target_gen.h
+        target_gen.cc
         debug.h
         optimize.h
         optimize.cc)
