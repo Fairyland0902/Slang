@@ -18,9 +18,11 @@ int func(struct Point p)
 int main()
 {
     struct Point p;
+    int a;
     char input[32];
     p.x = 1;
     p.y = 3;
+    p.z = 4;
     scanf("%s", input);
     printf("%s = %d", input, func(p));
     puts("");

@@ -64,6 +64,12 @@ void Driver::parse_helper(std::istream &stream)
 
         CodeGenContext context(filename);
         context.generateCode(*programBlock);
+        if (yynerrs > 0)
+        {
+            fprintf(stderr, "%d errors generated.\n", yynerrs);
+            exit(EXIT_FAILURE);
+        }
+
         if (DontLink)
         {
             generateTarget(context, OutputFile);

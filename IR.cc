@@ -9,6 +9,7 @@
 #define ISTYPE(value, id) (value->getType()->getTypeID() == id)
 
 extern std::string OptimizationLevel;
+extern int yynerrs;
 
 /*
  * @TODO:
@@ -90,13 +91,17 @@ llvm::Value *AST_Assignment::generateCode(CodeGenContext &context)
     std::cout << "Generating assignment of " << this->lhs->name << std::endl;
 #endif
     Value *dst = context.getSymbolValue(this->lhs->name);
+    if (dst == nullptr)
+    {
+        return LogErrorV("use of undeclared identifier '" + this->lhs->name + "'");
+    }
     auto dstType = context.getSymbolType(this->lhs->name);
     std::string dstTypeStr = dstType->name;
-    if (!dst)
-    {
-        return LogErrorV("Undeclared variable");
-    }
     Value *exp = this->rhs->generateCode(context);
+    if (exp == nullptr)
+    {
+        return nullptr;
+    }
 #ifdef IR_DEBUG
     std::cout << "dst typeid = " << TypeSystem::llvmTypeToStr(context.typeSystem.getVarType(dstTypeStr)) << std::endl;
     std::cout << "exp typeid = " << TypeSystem::llvmTypeToStr(exp) << std::endl;
@@ -114,8 +119,12 @@ llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
 #endif
     Value *L = this->lhs->generateCode(context);
     Value *R = this->rhs->generateCode(context);
-    bool fp = false;
+    if (L == nullptr || R == nullptr)
+    {
+        return nullptr;
+    }
 
+    bool fp = false;
     if ((L->getType()->getTypeID() == Type::DoubleTyID) || (R->getType()->getTypeID() == Type::DoubleTyID))
     {
         // Type upcasting.
@@ -130,10 +139,6 @@ llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
         }
     }
 
-    if (!L || !R)
-    {
-        return nullptr;
-    }
 #ifdef IR_DEBUG
     std::cout << "fp = " << std::boolalpha << fp << std::endl;
     std::cout << "L is " << TypeSystem::llvmTypeToStr(L) << std::endl;
@@ -151,18 +156,21 @@ llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
             return fp ? context.builder.CreateFDiv(L, R, "divftmp") : context.builder.CreateSDiv(L, R, "divtmp");
         case AND_OP:
         case BIT_AND_OP:
-            return fp ? LogErrorV("Double type has no AND operation") : context.builder.CreateAnd(L, R, "andtmp");
+            return fp ? LogErrorV("invalid operands to binary expression ('double' and 'double')")
+                      : context.builder.CreateAnd(L, R, "andtmp");
         case OR_OP:
         case BIT_OR_OP:
-            return fp ? LogErrorV("Double type has no OR operation") : context.builder.CreateOr(L, R, "ortmp");
+            return fp ? LogErrorV("invalid operands to binary expression ('double' and 'double')")
+                      : context.builder.CreateOr(L, R, "ortmp");
         case BIT_XOR_OP:
-            return fp ? LogErrorV("Double type has no XOR operation") : context.builder.CreateXor(L, R, "xortmp");
+            return fp ? LogErrorV("invalid operands to binary expression ('double' and 'double')")
+                      : context.builder.CreateXor(L, R, "xortmp");
         case LEFT_OP:
-            return fp ? LogErrorV("Double type has no LEFT SHIFT operation") : context.builder.CreateShl(L, R,
-                                                                                                         "shltmp");
+            return fp ? LogErrorV("invalid operands to binary expression ('double' and 'double')")
+                      : context.builder.CreateShl(L, R, "shltmp");
         case RIGHT_OP:
-            return fp ? LogErrorV("Double type has no RIGHT SHIFT operation") : context.builder.CreateAShr(L, R,
-                                                                                                           "ashrtmp");
+            return fp ? LogErrorV("invalid operands to binary expression ('double' and 'double')")
+                      : context.builder.CreateAShr(L, R, "ashrtmp");
         case LT_OP:
             return fp ? context.builder.CreateFCmpULT(L, R, "cmpftmp") : context.builder.CreateICmpULT(L, R, "cmptmp");
         case LE_OP:
@@ -176,7 +184,7 @@ llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
         case NE_OP:
             return fp ? context.builder.CreateFCmpONE(L, R, "cmpftmp") : context.builder.CreateICmpNE(L, R, "cmptmp");
         default:
-            return LogErrorV("Unknown binary operator");
+            return LogErrorV("unknown binary operator");
     }
 }
 
@@ -217,7 +225,7 @@ llvm::Value *AST_Identifier::generateCode(CodeGenContext &context)
     Value *value = context.getSymbolValue(this->name);
     if (!value)
     {
-        return LogErrorV("Unknown variable name " + this->name);
+        LogErrorV("use of undeclared identifier '" + this->name + "'");
     }
     if (value->getType()->isPointerTy())
     {
@@ -265,7 +273,7 @@ llvm::Value *AST_FunctionDeclaration::generateCode(CodeGenContext &context)
         retType = TypeOf(*this->type, context);
 
     FunctionType *functionType = FunctionType::get(retType, argTypes, false);
-    Function *function = Function::Create(functionType, GlobalValue::ExternalLinkage, this->id->name.c_str(),
+    Function *function = Function::Create(functionType, GlobalValue::ExternalLinkage, this->id->name,
                                           context.theModule.get());
 
     if (!this->isExternal)
@@ -301,7 +309,7 @@ llvm::Value *AST_FunctionDeclaration::generateCode(CodeGenContext &context)
             context.builder.CreateRet(context.getCurrentReturnValue());
         } else
         {
-            return LogErrorV("Function block return value not founded");
+            return LogErrorV("control reaches end with no return value");
         }
         context.popBlock();
     }
@@ -336,15 +344,17 @@ llvm::Value *AST_MethodCall::generateCode(CodeGenContext &context)
     std::cout << "Generating method call of " << this->id->name << std::endl;
 #endif
     Function *calleeF = context.theModule->getFunction(this->id->name);
-    if (!calleeF)
+    if (calleeF == nullptr)
     {
-        LogErrorV("Function name not found");
+        return LogErrorV("implicit declaration of function '" + (this->id->name) + "' is invalid");
     }
-    if (calleeF->arg_size() != this->arguments->size())
+    if (calleeF->arg_size() < this->arguments->size())
     {
-        LogErrorV(
-                "Function arguments size not match, calleeF=" + std::to_string(calleeF->size()) + ", this->arguments=" +
-                std::to_string(this->arguments->size()));
+        return LogErrorV("too many arguments in call to '" + (this->id->name) + "'");
+    }
+    if (calleeF->arg_size() > this->arguments->size())
+    {
+        return LogErrorV("too few arguments in call to '" + (this->id->name) + "'");
     }
     std::vector<Value *> argsv;
     for (auto it = this->arguments->begin(); it != this->arguments->end(); it++)
@@ -527,7 +537,7 @@ llvm::Value *AST_StructMember::generateCode(CodeGenContext &context)
 
     if (!structPtr->getType()->isStructTy())
     {
-        return LogErrorV("The variable is not struct");
+        return LogErrorV("member reference base type '" + (this->id->name) + "' is not a structure or union");
     }
 
     string structName = structPtr->getType()->getStructName().str();
@@ -553,7 +563,8 @@ llvm::Value *AST_StructAssignment::generateCode(CodeGenContext &context)
 
     if (!structPtr->getType()->isStructTy())
     {
-        return LogErrorV("The variable is not struct");
+        return LogErrorV(
+                "member reference base type '" + (this->structMember->id->name) + "' is not a structure or union");
     }
 
     string structName = structPtr->getType()->getStructName().str();
@@ -594,7 +605,7 @@ llvm::Value *AST_ArrayIndex::generateCode(CodeGenContext &context)
         indices = {ConstantInt::get(Type::getInt64Ty(context.llvmContext), 0), value};
     } else
     {
-        return LogErrorV("The variable is not array");
+        return LogErrorV("subscripted value is not an array");
     }
     auto ptr = context.builder.CreateInBoundsGEP(varPtr, indices, "elementPtr");
 
@@ -610,14 +621,14 @@ llvm::Value *AST_ArrayAssignment::generateCode(CodeGenContext &context)
 
     if (varPtr == nullptr)
     {
-        return LogErrorV("Unknown variable name");
+        return LogErrorV("use of undeclared identifier '" + this->arrayIndex->arrayName->name + "'");
     }
 
     auto arrayPtr = context.builder.CreateLoad(varPtr, "arrayPtr");
 
     if (!arrayPtr->getType()->isArrayTy() && !arrayPtr->getType()->isPointerTy())
     {
-        return LogErrorV("The variable is not array");
+        return LogErrorV("subscripted value is not an array");
     }
     auto index = calcArrayIndex(arrayIndex, context);
     std::vector<Value *> indices = {ConstantInt::get(Type::getInt64Ty(context.llvmContext), 0), index};
@@ -662,7 +673,9 @@ llvm::Value *AST_Literal::generateCode(CodeGenContext &context)
  */
 std::unique_ptr<AST_Expression> LogError(const char *str)
 {
-    fprintf(stderr, "slang:\033[31m error:\033[0m %s\n", str);
+    fprintf(stderr, "slang:\033[31m error: \033[0m");
+    fprintf(stderr, "\033[1m%s\033[0m\n", str);
+    yynerrs++;
     return nullptr;
 }
 

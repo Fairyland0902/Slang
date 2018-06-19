@@ -23,11 +23,8 @@ class TypeSystem
 {
 private:
     LLVMContext &llvmContext;
-
     std::map<string, std::vector<TypeNamePair>> _structMembers;
-
     std::map<string, llvm::StructType *> _structTypes;
-
     std::map<Type *, std::map<Type *, CastInst::CastOps>> _castTable;
 
     void addCast(Type *from, Type *to, CastInst::CastOps op);

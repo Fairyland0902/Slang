@@ -146,7 +146,7 @@ long TypeSystem::getStructMemberIndex(string structName, string memberName)
         }
     }
 
-    // LogError("Unknown struct member");
+    LogErrorV("no member named '" + memberName + "' in 'struct " + structName + "'");
 
     return 0;
 }
