@@ -65,8 +65,8 @@
 %type <variable_declaration> array_declaration
 %type <variable_declaration_list> parameter_list struct_declaration_list
 %type <expression_list> argument_expression_list
-%type <block> program translation_unit block
-%type <statement> statement variable_declaration function_declaration struct_declaration expression_statement selection_statement iteration_statement jump_statement
+%type <block> program translation_unit local_statement_list block
+%type <statement> statement local_statement variable_declaration function_declaration struct_declaration expression_statement selection_statement iteration_statement jump_statement
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
@@ -80,18 +80,14 @@ program
     ;
 
 translation_unit
-    : statement {$$ = new AST_Block(); $$->col = yycol; $$->row = yyrow; $$->statements->push_back(std::shared_ptr<AST_Statement>($1));}
-    | translation_unit statement {$1->statements->push_back(std::shared_ptr<AST_Statement>($2));}
+    : statement                     {$$ = new AST_Block(); $$->col = yycol; $$->row = yyrow; $$->statements->push_back(std::shared_ptr<AST_Statement>($1));}
+    | translation_unit statement    {$1->statements->push_back(std::shared_ptr<AST_Statement>($2)); $$ = $1;}
     ;
 
 statement
-    : variable_declaration ';'  {$$ = $1;}
-    | function_declaration      {$$ = $1;}
-    | struct_declaration        {$$ = $1;}
-    | expression_statement      {$$ = $1;}
-    | selection_statement       {$$ = $1;}
-    | iteration_statement       {$$ = $1;}
-    | jump_statement            {$$ = $1;}
+    : variable_declaration ';'  {$1->isGlobal = true; $$ = $1;}
+    | function_declaration      {$1->isGlobal = true; $$ = $1;}
+    | struct_declaration        {$1->isGlobal = true; $$ = $1;}
     | error ';'                 {yyerrok; yyclearin;}
     ;
 
@@ -166,9 +162,23 @@ jump_statement
     | RETURN expression ';' {$$ = new AST_ReturnStatement(std::shared_ptr<AST_Expression>($2)); $$->col = yycol; $$->row = yyrow;}
     ;
 
+local_statement_list
+    : local_statement                       {$$ = new AST_Block(); $$->col = yycol; $$->row = yyrow; $$->statements->push_back(std::shared_ptr<AST_Statement>($1));}
+    | local_statement_list local_statement  {$1->statements->push_back(std::shared_ptr<AST_Statement>($2)); $$ = $1;}
+    ;
+
+local_statement
+    : variable_declaration ';'  {$$ = $1;}
+    | expression_statement      {$$ = $1;}
+    | selection_statement       {$$ = $1;}
+    | iteration_statement       {$$ = $1;}
+    | jump_statement            {$$ = $1;}
+    | error ';'                 {yyerrok; yyclearin;}
+    ;
+
 block
-    : '{' translation_unit '}' {$$ = $2;}
-    | '{' '}' {$$ = new AST_Block(); $$->col = yycol; $$->row = yyrow;}
+    : '{' local_statement_list '}'  {$$ = $2;}
+    | '{' '}'                       {$$ = new AST_Block(); $$->col = yycol; $$->row = yyrow;}
     ;
 
 id

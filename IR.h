@@ -21,16 +21,17 @@ using namespace llvm;
 using std::unique_ptr;
 using std::string;
 
-using SymTable = std::map<string, Value *>;
+using SymbolTable = std::map<std::string, Value *>;
+using TypeTable = std::map<std::string, std::shared_ptr<AST_Identifier>>;
 
 class CodeGenBlock
 {
 public:
     BasicBlock *block;
     Value *returnValue;
-    std::map<string, Value *> locals;
+    SymbolTable locals;
     // Type name string of variables.
-    std::map<string, shared_ptr<AST_Identifier>> types;
+    TypeTable types;
     std::map<string, bool> isFuncArg;
     std::map<string, std::vector<uint64_t>> arraySizes;
 };
@@ -44,7 +45,8 @@ public:
     LLVMContext llvmContext;
     IRBuilder<> builder;
     unique_ptr<Module> theModule;
-    SymTable globalVars;
+    SymbolTable globalVars;
+    TypeTable globalTypes;
     TypeSystem typeSystem;
 
     CodeGenContext(std::string filename) : builder(llvmContext), typeSystem(llvmContext)
@@ -52,8 +54,23 @@ public:
         theModule = std::unique_ptr<Module>(new Module(filename, this->llvmContext));
     }
 
-    Value *getSymbolValue(const std::string &name) const
+    Constant *getInitial(Type *type)
     {
+        if (type->isDoubleTy())
+        {
+            return ConstantFP::get(Type::getDoubleTy(llvmContext), 0);
+        } else if (type->isIntegerTy())
+        {
+            return ConstantInt::get(Type::getInt32Ty(llvmContext), 0, true);
+        } else
+        {
+            return nullptr;
+        }
+    }
+
+    Value *getSymbolValue(const std::string &name)
+    {
+        // First, search for the local variables.
         for (auto it = blockStack.rbegin(); it != blockStack.rend(); it++)
         {
             if ((*it)->locals.find(name) != (*it)->locals.end())
@@ -61,11 +78,18 @@ public:
                 return (*it)->locals[name];
             }
         }
+        // Then, search for the global variables.
+        if (globalVars.find(name) != globalVars.end())
+        {
+            return globalVars[name];
+        }
+        // Finally ...
         return nullptr;
     }
 
-    shared_ptr<AST_Identifier> getSymbolType(const std::string &name) const
+    shared_ptr<AST_Identifier> getSymbolType(const std::string &name)
     {
+        // First, search for the local variables.
         for (auto it = blockStack.rbegin(); it != blockStack.rend(); it++)
         {
             if ((*it)->types.find(name) != (*it)->types.end())
@@ -73,7 +97,35 @@ public:
                 return (*it)->types[name];
             }
         }
+        // Then, search for the global variables.
+        if (globalTypes.find(name) != globalTypes.end())
+        {
+            return globalTypes[name];
+        }
+        // Finally ...
         return nullptr;
+    }
+
+    void setSymbolValue(const std::string &name, Value *value, bool isGlobal)
+    {
+        if (isGlobal)
+        {
+            globalVars[name] = value;
+        } else
+        {
+            blockStack.back()->locals[name] = value;
+        }
+    }
+
+    void setSymbolType(const std::string &name, shared_ptr<AST_Identifier> value, bool isGlobal)
+    {
+        if (isGlobal)
+        {
+            globalTypes[name] = value;
+        } else
+        {
+            blockStack.back()->types[name] = value;
+        }
     }
 
     bool isFuncArg(const std::string &name) const
@@ -86,16 +138,6 @@ public:
             }
         }
         return false;
-    }
-
-    void setSymbolValue(const std::string &name, Value *value)
-    {
-        blockStack.back()->locals[name] = value;
-    }
-
-    void setSymbolType(const std::string &name, shared_ptr<AST_Identifier> value)
-    {
-        blockStack.back()->types[name] = value;
     }
 
     void setFuncArg(const std::string &name, bool value)
@@ -162,15 +204,20 @@ public:
         return blockStack.back()->arraySizes[name];
     }
 
-    void PrintSymTable() const
+    void PrintSymTable()
     {
-        std::cout << "======= Print Symbol Table ========" << std::endl;
+        std::cout << "======= Global Symbol Table =======" << std::endl;
+        for (auto it = globalVars.begin(); it != globalVars.end(); it++)
+        {
+            std::cout << it->first << " = " << it->second << " : " << getSymbolType(it->first) << std::endl;
+        }
+        std::cout << "======= Local Symbol Table ========" << std::endl;
         std::string prefix = "";
         for (auto it = blockStack.begin(); it != blockStack.end(); it++)
         {
             for (auto it2 = (*it)->locals.begin(); it2 != (*it)->locals.end(); it2++)
             {
-                std::cout << prefix << it2->first << " = " << it2->second << ": " << this->getSymbolType(it2->first)
+                std::cout << prefix << it2->first << " = " << it2->second << " : " << this->getSymbolType(it2->first)
                           << std::endl;
             }
             prefix += "\t";

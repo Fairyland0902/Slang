@@ -298,8 +298,8 @@ llvm::Value *AST_FunctionDeclaration::generateCode(CodeGenContext &context)
                 argAlloc = (*origin_arg)->generateCode(context);
 
             context.builder.CreateStore(&ir_arg_it, argAlloc, false);
-            context.setSymbolValue((*origin_arg)->id->name, argAlloc);
-            context.setSymbolType((*origin_arg)->id->name, (*origin_arg)->type);
+            context.setSymbolValue((*origin_arg)->id->name, argAlloc, false);
+            context.setSymbolType((*origin_arg)->id->name, (*origin_arg)->type, false);
             context.setFuncArg((*origin_arg)->id->name, true);
             origin_arg++;
         }
@@ -377,7 +377,6 @@ llvm::Value *AST_VariableDeclaration::generateCode(CodeGenContext &context)
     std::cout << "Generating variable declaration of " << this->type->name << " " << this->id->name << std::endl;
 #endif
     Type *type = TypeOf(*this->type, context);
-    Value *initial = nullptr;
 
     Value *inst = nullptr;
 
@@ -398,11 +397,23 @@ llvm::Value *AST_VariableDeclaration::generateCode(CodeGenContext &context)
         inst = context.builder.CreateAlloca(arrayType, arraySizeValue, "arraytmp");
     } else
     {
-        inst = context.builder.CreateAlloca(type);
+        if (isGlobal)
+        {
+            Constant *initial = context.getInitial(type);
+            if (initial == nullptr)
+            {
+                std::cout << "fuck" << std::endl;
+                return nullptr;
+            }
+            inst = new GlobalVariable(*context.theModule, type, false, GlobalValue::ExternalLinkage, initial);
+        } else
+        {
+            inst = context.builder.CreateAlloca(type);
+        }
     }
 
-    context.setSymbolType(this->id->name, this->type);
-    context.setSymbolValue(this->id->name, inst);
+    context.setSymbolType(this->id->name, this->type, isGlobal);
+    context.setSymbolValue(this->id->name, inst, isGlobal);
 #ifdef IR_DEBUG
     context.PrintSymTable();
 #endif

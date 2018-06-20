@@ -81,6 +81,8 @@ public:
 class AST_Statement : public AST_Node
 {
 public:
+    bool isGlobal = false;
+
     AST_Statement() = default;
 
     std::string getTypeName() const override
@@ -451,6 +453,7 @@ public:
 #ifdef AST_DEBUG
         std::cout << "isType = " << std::boolalpha << type->isType << std::endl;
         std::cout << "isArray = " << std::boolalpha << type->isArray << std::endl;
+        std::cout << "isGlobal = " << std::boolalpha << isGlobal << std::endl;
 #endif
         assert(type->isType);
         assert(!type->isArray || (type->isArray && type->arraySize != nullptr));
