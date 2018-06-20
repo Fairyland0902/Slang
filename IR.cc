@@ -274,11 +274,22 @@ llvm::Value *AST_FunctionDeclaration::generateCode(CodeGenContext &context)
         retType = TypeOf(*this->type, context);
 
     FunctionType *functionType = FunctionType::get(retType, argTypes, false);
-    Function *function = Function::Create(functionType, GlobalValue::ExternalLinkage, this->id->name,
-                                          context.theModule.get());
+    Function *function;
 
-    if (!this->isExternal)
+    if (this->isExternal)
     {
+        function = Function::Create(functionType, GlobalValue::ExternalLinkage, this->id->name,
+                                    context.theModule.get());
+    } else
+    {
+        // Check whether this function has been declared before.
+        function = context.theModule->getFunction(this->id->name);
+        // If not, just create this function as before.
+        if (function == nullptr)
+        {
+            function = Function::Create(functionType, GlobalValue::ExternalLinkage, this->id->name,
+                                        context.theModule.get());
+        }
         BasicBlock *basicBlock = BasicBlock::Create(context.llvmContext, "entry", function, nullptr);
 
         context.builder.SetInsertPoint(basicBlock);
@@ -476,15 +487,13 @@ llvm::Value *AST_IfStatement::generateCode(CodeGenContext &context)
     context.builder.SetInsertPoint(thenBB);
 
     context.pushBlock(thenBB);
-
     this->trueBlock->generateCode(context);
-
     context.popBlock();
 
     thenBB = context.builder.GetInsertBlock();
 
     if (thenBB->getTerminator() == nullptr)
-    { //
+    {
         context.builder.CreateBr(mergeBB);
     }
 

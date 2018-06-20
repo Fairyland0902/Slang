@@ -123,6 +123,7 @@ variable_declaration
 
 function_declaration
     : type_specifier id '(' parameter_list ')' block        {$$ = new AST_FunctionDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_VariableList>($4), std::shared_ptr<AST_Block>($6)); $$->col = yycol; $$->row = yyrow;}
+    | type_specifier id '(' parameter_list ')' ';'          {$$ = new AST_FunctionDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_VariableList>($4), nullptr, true); $$->col = yycol; $$->row = yyrow;}
     | EXTERN type_specifier id '(' parameter_list ')' ';'   {$$ = new AST_FunctionDeclaration(std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_Identifier>($3), std::shared_ptr<AST_VariableList>($5), nullptr, true); $$->col = yycol; $$->row = yyrow;}
     ;
 

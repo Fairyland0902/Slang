@@ -56,10 +56,13 @@ public:
 
     Constant *getInitial(Type *type)
     {
-        if (type->isDoubleTy())
+        if (type->isDoubleTy() || type->isFloatTy())
         {
             return ConstantFP::get(Type::getDoubleTy(llvmContext), 0);
         } else if (type->isIntegerTy())
+        {
+            return ConstantInt::get(Type::getInt32Ty(llvmContext), 0, true);
+        } else if (type->isStructTy())
         {
             return ConstantInt::get(Type::getInt32Ty(llvmContext), 0, true);
         } else
