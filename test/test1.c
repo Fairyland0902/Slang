@@ -2,13 +2,15 @@ extern int printf(char str, int format);
 
 extern int puts(char str);
 
-int w = 1;
+int w;
+double k[3];
 
 int main()
 {
     int x;
     int y;
     int z;
+    int kk[3] = {2, 3, 4};
 
     x = 12;
     y = x + 22;   /* load value of x that was just stored */
@@ -23,6 +25,15 @@ int main()
     puts("");
     printf("w = %d", w);
     puts("");
+    int i;
+    for (i = 0; i < 3; i = i + 1)
+    {
+        k[i] = i / 3.0;
+        printf("k[i] = %lf", k[i]);
+        puts("");
+        printf("kk[i] = %d", kk[i]);
+        puts("");
+    }
 
     return 0;
 }

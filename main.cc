@@ -153,11 +153,6 @@ int main(int argc, char **argv)
     } else
     {
         // Compile from an input file.
-        Driver driver;
-        std::string InputFile = "../test/test1.c";
-        OutputFile = "a.out";
-        yyfile = InputFile.c_str();
-        driver.parse(InputFile);
         fprintf(stderr, "slang:\033[1;31m error:\033[0m no input files\n");
         exit(EXIT_FAILURE);
     }

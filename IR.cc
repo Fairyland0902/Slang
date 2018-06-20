@@ -374,7 +374,8 @@ llvm::Value *AST_MethodCall::generateCode(CodeGenContext &context)
 llvm::Value *AST_VariableDeclaration::generateCode(CodeGenContext &context)
 {
 #ifdef IR_DEBUG
-    std::cout << "Generating variable declaration of " << this->type->name << " " << this->id->name << std::endl;
+    std::cout << "Generating variable declaration of " << this->type->name << " " << this->id->name
+              << (this->isGlobal ? " (global)" : "") << std::endl;
 #endif
     Type *type = TypeOf(*this->type, context);
 
@@ -394,7 +395,19 @@ llvm::Value *AST_VariableDeclaration::generateCode(CodeGenContext &context)
         context.setArraySize(this->id->name, arraySizes);
         Value *arraySizeValue = AST_Integer(arraySize).generateCode(context);
         auto arrayType = ArrayType::get(context.typeSystem.getVarType(this->type->name), arraySize);
-        inst = context.builder.CreateAlloca(arrayType, arraySizeValue, "arraytmp");
+        if (isGlobal)
+        {
+            GlobalVariable *gvar_array_a = new GlobalVariable(*context.theModule, arrayType, false,
+                                                              GlobalValue::ExternalLinkage, 0, "arraytmp");
+            // Constant Definitions.
+            ConstantAggregateZero *const_array_2 = ConstantAggregateZero::get(arrayType);
+            // Global Variable Definitions.
+            gvar_array_a->setInitializer(const_array_2);
+            inst = static_cast<Value *>(gvar_array_a);
+        } else
+        {
+            inst = context.builder.CreateAlloca(arrayType, arraySizeValue, "arraytmp");
+        }
     } else
     {
         if (isGlobal)
@@ -402,7 +415,6 @@ llvm::Value *AST_VariableDeclaration::generateCode(CodeGenContext &context)
             Constant *initial = context.getInitial(type);
             if (initial == nullptr)
             {
-                std::cout << "fuck" << std::endl;
                 return nullptr;
             }
             inst = new GlobalVariable(*context.theModule, type, false, GlobalValue::ExternalLinkage, initial);
@@ -663,6 +675,10 @@ llvm::Value *AST_ArrayInitialization::generateCode(CodeGenContext &context)
 #ifdef IR_DEBUG
     std::cout << "Generating array initialization of " << this->declaration->id->name << std::endl;
 #endif
+    if (isGlobal)
+    {
+        this->declaration->isGlobal = true;
+    }
     auto arrayPtr = this->declaration->generateCode(context);
     auto sizeVec = context.getArraySize(this->declaration->id->name);
     // @TODO: multi-dimension array initialization

@@ -467,7 +467,7 @@ public:
     void print(std::string prefix) const override
     {
         std::string nextPrefix = prefix + this->PREFIX;
-        std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
+        std::cout << prefix << getTypeName() << DELIMINATER << (isGlobal ? "[global]" : "") << std::endl;
         type->print(nextPrefix);
         id->print(nextPrefix);
         if (assignmentExpr)
@@ -924,7 +924,7 @@ public:
     void print(std::string prefix) const override
     {
         std::string nextPrefix = prefix + this->PREFIX;
-        std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
+        std::cout << prefix << getTypeName() << DELIMINATER << (isGlobal ? "[global]" : "") << std::endl;
         declaration->print(nextPrefix);
 
         for (auto it = expressionList->begin(); it != expressionList->end(); it++)
