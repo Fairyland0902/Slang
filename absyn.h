@@ -47,6 +47,9 @@ public:
         return Json::Value();
     }
 
+    int col;
+    int row;
+
 protected:
     const std::string DELIMINATER = ":";
     const std::string PREFIX = "--";

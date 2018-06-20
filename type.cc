@@ -130,7 +130,7 @@ bool TypeSystem::isStruct(string typeStr) const
     return this->_structTypes.find(typeStr) != this->_structTypes.end();
 }
 
-long TypeSystem::getStructMemberIndex(string structName, string memberName)
+long TypeSystem::getStructMemberIndex(string structName, string memberName, int row, int col)
 {
     if (this->_structTypes.find(structName) == this->_structTypes.end())
     {
@@ -146,7 +146,7 @@ long TypeSystem::getStructMemberIndex(string structName, string memberName)
         }
     }
 
-    LogErrorV("no member named '" + memberName + "' in 'struct " + structName + "'");
+    LogErrorV(row, col, "no member named '" + memberName + "' in 'struct " + structName + "'");
 
     return 0;
 }

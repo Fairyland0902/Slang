@@ -44,7 +44,7 @@ public:
 
     void addStructMember(string structName, string memType, string memName);
 
-    long getStructMemberIndex(string structName, string memberName);
+    long getStructMemberIndex(string structName, string memberName, int row, int col);
 
     Type *getVarType(const AST_Identifier &type);
 

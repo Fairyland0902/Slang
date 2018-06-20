@@ -9,6 +9,7 @@
 #define ISTYPE(value, id) (value->getType()->getTypeID() == id)
 
 extern std::string OptimizationLevel;
+extern const char *yyfile;
 extern int yynerrs;
 
 /*
@@ -93,7 +94,7 @@ llvm::Value *AST_Assignment::generateCode(CodeGenContext &context)
     Value *dst = context.getSymbolValue(this->lhs->name);
     if (dst == nullptr)
     {
-        return LogErrorV("use of undeclared identifier '" + this->lhs->name + "'");
+        return LogErrorV(this->lhs->row, this->lhs->col, "use of undeclared identifier '" + this->lhs->name + "'");
     }
     auto dstType = context.getSymbolType(this->lhs->name);
     std::string dstTypeStr = dstType->name;
@@ -156,20 +157,20 @@ llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
             return fp ? context.builder.CreateFDiv(L, R, "divftmp") : context.builder.CreateSDiv(L, R, "divtmp");
         case AND_OP:
         case BIT_AND_OP:
-            return fp ? LogErrorV("invalid operands to binary expression ('double' and 'double')")
+            return fp ? LogErrorV(this->row, this->col, "invalid operands to binary expression ('double' and 'double')")
                       : context.builder.CreateAnd(L, R, "andtmp");
         case OR_OP:
         case BIT_OR_OP:
-            return fp ? LogErrorV("invalid operands to binary expression ('double' and 'double')")
+            return fp ? LogErrorV(this->row, this->col, "invalid operands to binary expression ('double' and 'double')")
                       : context.builder.CreateOr(L, R, "ortmp");
         case BIT_XOR_OP:
-            return fp ? LogErrorV("invalid operands to binary expression ('double' and 'double')")
+            return fp ? LogErrorV(this->row, this->col, "invalid operands to binary expression ('double' and 'double')")
                       : context.builder.CreateXor(L, R, "xortmp");
         case LEFT_OP:
-            return fp ? LogErrorV("invalid operands to binary expression ('double' and 'double')")
+            return fp ? LogErrorV(this->row, this->col, "invalid operands to binary expression ('double' and 'double')")
                       : context.builder.CreateShl(L, R, "shltmp");
         case RIGHT_OP:
-            return fp ? LogErrorV("invalid operands to binary expression ('double' and 'double')")
+            return fp ? LogErrorV(this->row, this->col, "invalid operands to binary expression ('double' and 'double')")
                       : context.builder.CreateAShr(L, R, "ashrtmp");
         case LT_OP:
             return fp ? context.builder.CreateFCmpULT(L, R, "cmpftmp") : context.builder.CreateICmpULT(L, R, "cmptmp");
@@ -184,7 +185,7 @@ llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
         case NE_OP:
             return fp ? context.builder.CreateFCmpONE(L, R, "cmpftmp") : context.builder.CreateICmpNE(L, R, "cmptmp");
         default:
-            return LogErrorV("unknown binary operator");
+            return LogErrorV(this->row, this->col, "unknown binary operator");
     }
 }
 
@@ -223,9 +224,9 @@ llvm::Value *AST_Identifier::generateCode(CodeGenContext &context)
     std::cout << "Generating identifier " << this->name << std::endl;
 #endif
     Value *value = context.getSymbolValue(this->name);
-    if (!value)
+    if (value == nullptr)
     {
-        LogErrorV("use of undeclared identifier '" + this->name + "'");
+        return LogErrorV(this->row, this->col, "use of undeclared identifier '" + this->name + "'");
     }
     if (value->getType()->isPointerTy())
     {
@@ -309,7 +310,7 @@ llvm::Value *AST_FunctionDeclaration::generateCode(CodeGenContext &context)
             context.builder.CreateRet(context.getCurrentReturnValue());
         } else
         {
-            return LogErrorV("control reaches end with no return value");
+            return LogErrorV(this->block->row, this->block->col, "control reaches end with no return value");
         }
         context.popBlock();
     }
@@ -346,15 +347,16 @@ llvm::Value *AST_MethodCall::generateCode(CodeGenContext &context)
     Function *calleeF = context.theModule->getFunction(this->id->name);
     if (calleeF == nullptr)
     {
-        return LogErrorV("implicit declaration of function '" + (this->id->name) + "' is invalid");
+        return LogErrorV(this->id->row, this->id->col,
+                         "implicit declaration of function '" + (this->id->name) + "' is invalid");
     }
     if (calleeF->arg_size() < this->arguments->size())
     {
-        return LogErrorV("too many arguments in call to '" + (this->id->name) + "'");
+        return LogErrorV(this->id->row, this->id->col, "too many arguments in call to '" + (this->id->name) + "'");
     }
     if (calleeF->arg_size() > this->arguments->size())
     {
-        return LogErrorV("too few arguments in call to '" + (this->id->name) + "'");
+        return LogErrorV(this->id->row, this->id->col, "too few arguments in call to '" + (this->id->name) + "'");
     }
     std::vector<Value *> argsv;
     for (auto it = this->arguments->begin(); it != this->arguments->end(); it++)
@@ -537,11 +539,13 @@ llvm::Value *AST_StructMember::generateCode(CodeGenContext &context)
 
     if (!structPtr->getType()->isStructTy())
     {
-        return LogErrorV("member reference base type '" + (this->id->name) + "' is not a structure or union");
+        return LogErrorV(this->id->row, this->id->col,
+                         "member reference base type '" + (this->id->name) + "' is not a structure or union");
     }
 
     string structName = structPtr->getType()->getStructName().str();
-    long memberIndex = context.typeSystem.getStructMemberIndex(structName, this->member->name);
+    long memberIndex = context.typeSystem.getStructMemberIndex(structName, this->member->name, this->member->row,
+                                                               this->member->col);
 
     std::vector<Value *> indices;
     indices.push_back(ConstantInt::get(context.typeSystem.intTy, 0, false));
@@ -563,12 +567,15 @@ llvm::Value *AST_StructAssignment::generateCode(CodeGenContext &context)
 
     if (!structPtr->getType()->isStructTy())
     {
-        return LogErrorV(
-                "member reference base type '" + (this->structMember->id->name) + "' is not a structure or union");
+        return LogErrorV(this->structMember->id->row, this->structMember->id->col,
+                         "member reference base type '" + (this->structMember->id->name) +
+                         "' is not a structure or union");
     }
 
     string structName = structPtr->getType()->getStructName().str();
-    long memberIndex = context.typeSystem.getStructMemberIndex(structName, this->structMember->member->name);
+    long memberIndex = context.typeSystem.getStructMemberIndex(structName, this->structMember->member->name,
+                                                               this->structMember->member->row,
+                                                               this->structMember->member->col);
 
     std::vector<Value *> indices;
     auto value = this->expression->generateCode(context);
@@ -605,7 +612,7 @@ llvm::Value *AST_ArrayIndex::generateCode(CodeGenContext &context)
         indices = {ConstantInt::get(Type::getInt64Ty(context.llvmContext), 0), value};
     } else
     {
-        return LogErrorV("subscripted value is not an array");
+        return LogErrorV(this->arrayName->row, this->arrayName->col, "subscripted value is not an array");
     }
     auto ptr = context.builder.CreateInBoundsGEP(varPtr, indices, "elementPtr");
 
@@ -621,14 +628,16 @@ llvm::Value *AST_ArrayAssignment::generateCode(CodeGenContext &context)
 
     if (varPtr == nullptr)
     {
-        return LogErrorV("use of undeclared identifier '" + this->arrayIndex->arrayName->name + "'");
+        return LogErrorV(this->arrayIndex->arrayName->row, this->arrayIndex->arrayName->col,
+                         "use of undeclared identifier '" + this->arrayIndex->arrayName->name + "'");
     }
 
     auto arrayPtr = context.builder.CreateLoad(varPtr, "arrayPtr");
 
     if (!arrayPtr->getType()->isArrayTy() && !arrayPtr->getType()->isPointerTy())
     {
-        return LogErrorV("subscripted value is not an array");
+        return LogErrorV(this->arrayIndex->arrayName->row, this->arrayIndex->arrayName->col,
+                         "subscripted value is not an array");
     }
     auto index = calcArrayIndex(arrayIndex, context);
     std::vector<Value *> indices = {ConstantInt::get(Type::getInt64Ty(context.llvmContext), 0), index};
@@ -671,21 +680,22 @@ llvm::Value *AST_Literal::generateCode(CodeGenContext &context)
  * Global Functions
  *
  */
-std::unique_ptr<AST_Expression> LogError(const char *str)
+std::unique_ptr<AST_Expression> LogError(const int row, const int col, const char *str)
 {
-    fprintf(stderr, "slang:\033[31m error: \033[0m");
+    fflush(stdout);
+    fprintf(stderr, "\033[1m%s:%d:%d:\033[1;31m error: \033[0m", yyfile, row, col);
     fprintf(stderr, "\033[1m%s\033[0m\n", str);
     yynerrs++;
     return nullptr;
 }
 
-Value *LogErrorV(const std::string &str)
+Value *LogErrorV(const int row, const int col, const std::string &str)
 {
-    return LogErrorV(str.c_str());
+    return LogErrorV(row, col, str.c_str());
 }
 
-Value *LogErrorV(const char *str)
+Value *LogErrorV(const int row, const int col, const char *str)
 {
-    LogError(str);
+    LogError(row, col, str);
     return nullptr;
 }

@@ -181,8 +181,8 @@ public:
     void generateCode(AST_Block &root);
 };
 
-Value *LogErrorV(const char *str);
+Value *LogErrorV(const int row, const int col, const char *str);
 
-Value *LogErrorV(const std::string &str);
+Value *LogErrorV(const int row, const int col, const std::string &str);
 
 #endif // SLANG_IR_H

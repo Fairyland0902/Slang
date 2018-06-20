@@ -80,7 +80,7 @@ program
     ;
 
 translation_unit
-    : statement {$$ = new AST_Block(); $$->statements->push_back(std::shared_ptr<AST_Statement>($1));}
+    : statement {$$ = new AST_Block(); $$->col = yycol; $$->row = yyrow; $$->statements->push_back(std::shared_ptr<AST_Statement>($1));}
     | translation_unit statement {$1->statements->push_back(std::shared_ptr<AST_Statement>($2));}
     ;
 
@@ -96,12 +96,12 @@ statement
     ;
 
 primary_typename
-    : INT       {$$ = new AST_Identifier(*$1); $$->isType = true; delete $1;}
-    | DOUBLE    {$$ = new AST_Identifier(*$1); $$->isType = true; delete $1;}
-    | FLOAT     {$$ = new AST_Identifier(*$1); $$->isType = true; delete $1;}
-    | CHAR      {$$ = new AST_Identifier(*$1); $$->isType = true; delete $1;}
-    | BOOL      {$$ = new AST_Identifier(*$1); $$->isType = true; delete $1;}
-    | VOID      {$$ = new AST_Identifier(*$1); $$->isType = true; delete $1;}
+    : INT       {$$ = new AST_Identifier(*$1); $$->col = yycol; $$->row = yyrow; $$->isType = true; delete $1;}
+    | DOUBLE    {$$ = new AST_Identifier(*$1); $$->col = yycol; $$->row = yyrow; $$->isType = true; delete $1;}
+    | FLOAT     {$$ = new AST_Identifier(*$1); $$->col = yycol; $$->row = yyrow; $$->isType = true; delete $1;}
+    | CHAR      {$$ = new AST_Identifier(*$1); $$->col = yycol; $$->row = yyrow; $$->isType = true; delete $1;}
+    | BOOL      {$$ = new AST_Identifier(*$1); $$->col = yycol; $$->row = yyrow; $$->isType = true; delete $1;}
+    | VOID      {$$ = new AST_Identifier(*$1); $$->col = yycol; $$->row = yyrow; $$->isType = true; delete $1;}
     ;
 
 struct_typename
@@ -114,20 +114,20 @@ type_specifier
     ;
 
 array_declaration
-    : type_specifier id '[' I_CONSTANT ']'  {$1->isArray = true; $1->arraySize->push_back(make_shared<AST_Integer>(atol($4->c_str()))); $$ = new AST_VariableDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), nullptr);}
+    : type_specifier id '[' I_CONSTANT ']'  {$1->isArray = true; $1->arraySize->push_back(make_shared<AST_Integer>(atol($4->c_str()))); $$ = new AST_VariableDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), nullptr); $$->col = yycol; $$->row = yyrow;}
     | array_declaration '[' I_CONSTANT ']'  {$1->type->arraySize->push_back(make_shared<AST_Integer>(atol($3->c_str()))); $$ = $1;}
     ;
 
 variable_declaration
-    : type_specifier id                                         {$$ = new AST_VariableDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), nullptr);}
-    | type_specifier id '=' expression                          {$$ = new AST_VariableDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_Expression>($4));}
+    : type_specifier id                                         {$$ = new AST_VariableDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), nullptr); $$->col = yycol; $$->row = yyrow;}
+    | type_specifier id '=' expression                          {$$ = new AST_VariableDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_Expression>($4)); $$->col = yycol; $$->row = yyrow;}
     | array_declaration                                         {$$ = $1;}
-    | array_declaration '=' '{' argument_expression_list '}'    {$$ = new AST_ArrayInitialization(std::shared_ptr<AST_VariableDeclaration>($1), std::shared_ptr<AST_ExpressionList>($4));}
+    | array_declaration '=' '{' argument_expression_list '}'    {$$ = new AST_ArrayInitialization(std::shared_ptr<AST_VariableDeclaration>($1), std::shared_ptr<AST_ExpressionList>($4)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 function_declaration
-    : type_specifier id '(' parameter_list ')' block        {$$ = new AST_FunctionDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_VariableList>($4), std::shared_ptr<AST_Block>($6));}
-    | EXTERN type_specifier id '(' parameter_list ')' ';'   {$$ = new AST_FunctionDeclaration(std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_Identifier>($3), std::shared_ptr<AST_VariableList>($5), nullptr, true);}
+    : type_specifier id '(' parameter_list ')' block        {$$ = new AST_FunctionDeclaration(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_VariableList>($4), std::shared_ptr<AST_Block>($6)); $$->col = yycol; $$->row = yyrow;}
+    | EXTERN type_specifier id '(' parameter_list ')' ';'   {$$ = new AST_FunctionDeclaration(std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_Identifier>($3), std::shared_ptr<AST_VariableList>($5), nullptr, true); $$->col = yycol; $$->row = yyrow;}
     ;
 
 parameter_list
@@ -137,7 +137,7 @@ parameter_list
     ;
 
 struct_declaration
-    : STRUCT id '{' struct_declaration_list '}' ';' {$$ = new AST_StructDeclaration(std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_VariableList>($4));}
+    : STRUCT id '{' struct_declaration_list '}' ';' {$$ = new AST_StructDeclaration(std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_VariableList>($4)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 struct_declaration_list
@@ -146,42 +146,42 @@ struct_declaration_list
     ;
 
 expression_statement
-    : ';'               {AST_Expression* empty = new AST_Expression(); $$ = new AST_ExpressionStatement(std::shared_ptr<AST_Expression>(empty));}
-    | expression ';'    {$$ = new AST_ExpressionStatement(std::shared_ptr<AST_Expression>($1));}
+    : ';'               {AST_Expression* empty = new AST_Expression(); $$ = new AST_ExpressionStatement(std::shared_ptr<AST_Expression>(empty)); $$->col = yycol; $$->row = yyrow;}
+    | expression ';'    {$$ = new AST_ExpressionStatement(std::shared_ptr<AST_Expression>($1)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 selection_statement
-    : IF '(' expression ')' block ELSE block                {$$ = new AST_IfStatement(std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Block>($5), std::shared_ptr<AST_Block>($7));}
-    | IF '(' expression ')' block ELSE selection_statement  {auto tmp_block = new AST_Block(); tmp_block->statements->push_back(std::shared_ptr<AST_Statement>($7)); $$ = new AST_IfStatement(std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Block>($5), std::shared_ptr<AST_Block>(tmp_block));}
-    | IF '(' expression ')' block %prec LOWER_THAN_ELSE     {$$ = new AST_IfStatement(std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Block>($5));}
+    : IF '(' expression ')' block ELSE block                {$$ = new AST_IfStatement(std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Block>($5), std::shared_ptr<AST_Block>($7)); $$->col = yycol; $$->row = yyrow;}
+    | IF '(' expression ')' block ELSE selection_statement  {auto tmp_block = new AST_Block(); tmp_block->col = yycol; tmp_block->row = yyrow; tmp_block->statements->push_back(std::shared_ptr<AST_Statement>($7)); $$ = new AST_IfStatement(std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Block>($5), std::shared_ptr<AST_Block>(tmp_block)); $$->col = yycol; $$->row = yyrow;}
+    | IF '(' expression ')' block %prec LOWER_THAN_ELSE     {$$ = new AST_IfStatement(std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Block>($5)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 iteration_statement
-    : WHILE '(' expression ')' block                                {$$ = new AST_ForStatement(std::shared_ptr<AST_Block>($5), nullptr, std::shared_ptr<AST_Expression>($3), nullptr);}
-    | FOR '(' expression ';' expression ';' expression ')' block    {$$ = new AST_ForStatement(std::shared_ptr<AST_Block>($9), std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Expression>($5), std::shared_ptr<AST_Expression>($7));}
+    : WHILE '(' expression ')' block                                {$$ = new AST_ForStatement(std::shared_ptr<AST_Block>($5), nullptr, std::shared_ptr<AST_Expression>($3), nullptr); $$->col = yycol; $$->row = yyrow;}
+    | FOR '(' expression ';' expression ';' expression ')' block    {$$ = new AST_ForStatement(std::shared_ptr<AST_Block>($9), std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Expression>($5), std::shared_ptr<AST_Expression>($7)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 jump_statement
-    : RETURN ';'            {AST_Expression* empty = new AST_Expression(); $$ = new AST_ReturnStatement(std::shared_ptr<AST_Expression>(empty));}
-    | RETURN expression ';' {$$ = new AST_ReturnStatement(std::shared_ptr<AST_Expression>($2));}
+    : RETURN ';'            {AST_Expression* empty = new AST_Expression(); $$ = new AST_ReturnStatement(std::shared_ptr<AST_Expression>(empty)); $$->col = yycol; $$->row = yyrow;}
+    | RETURN expression ';' {$$ = new AST_ReturnStatement(std::shared_ptr<AST_Expression>($2)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 block
     : '{' translation_unit '}' {$$ = $2;}
-    | '{' '}' {$$ = new AST_Block();}
+    | '{' '}' {$$ = new AST_Block(); $$->col = yycol; $$->row = yyrow;}
     ;
 
 id
-    : IDENTIFIER {$$ = new AST_Identifier(*$1); delete $1;}
+    : IDENTIFIER {$$ = new AST_Identifier(*$1); $$->col = yycol; $$->row = yyrow; delete $1;}
     ;
 
 constant
-    : I_CONSTANT {$$ = new AST_Integer(atol($1->c_str())); delete $1;}
-    | F_CONSTANT {$$ = new AST_Double(atof($1->c_str())); delete $1;}
+    : I_CONSTANT {$$ = new AST_Integer(atol($1->c_str())); $$->col = yycol; $$->row = yyrow; delete $1;}
+    | F_CONSTANT {$$ = new AST_Double(atof($1->c_str())); $$->col = yycol; $$->row = yyrow; delete $1;}
     ;
 
 string
-    : STRING_LITERAL {std::string temp = $1->substr(1, $1->length() - 2); $$ = new AST_Literal(temp); delete $1;}
+    : STRING_LITERAL {std::string temp = $1->substr(1, $1->length() - 2); $$ = new AST_Literal(temp); $$->col = yycol; $$->row = yyrow; delete $1;}
     ;
 
 expression
@@ -190,67 +190,67 @@ expression
 
 assignment_expression
     : logical_or_expression                 {$$ = $1;}
-    | id '=' assignment_expression          {$$ = new AST_Assignment(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Expression>($3));}
-    | array_index '=' assignment_expression {$$ = new AST_ArrayAssignment(std::shared_ptr<AST_ArrayIndex>($1), std::shared_ptr<AST_Expression>($3));}
-    | id '.' id '=' assignment_expression   {auto member = std::make_shared<AST_StructMember>(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($3)); $$ = new AST_StructAssignment(member, std::shared_ptr<AST_Expression>($5));}
+    | id '=' assignment_expression          {$$ = new AST_Assignment(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | array_index '=' assignment_expression {$$ = new AST_ArrayAssignment(std::shared_ptr<AST_ArrayIndex>($1), std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | id '.' id '=' assignment_expression   {auto member = std::make_shared<AST_StructMember>(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($3)); $$ = new AST_StructAssignment(member, std::shared_ptr<AST_Expression>($5)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 logical_or_expression
     : logical_and_expression                                {$$ = $1;}
-    | logical_or_expression OR_OP logical_and_expression    {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
+    | logical_or_expression OR_OP logical_and_expression    {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 logical_and_expression
     : inclusive_or_expression                               {$$ = $1;}
-    | logical_and_expression AND_OP inclusive_or_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
+    | logical_and_expression AND_OP inclusive_or_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 inclusive_or_expression
     : exclusive_or_expression                                   {$$ = $1;}
-    | inclusive_or_expression BIT_OR_OP exclusive_or_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
+    | inclusive_or_expression BIT_OR_OP exclusive_or_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 exclusive_or_expression
     : and_expression                                    {$$ = $1;}
-    | exclusive_or_expression BIT_XOR_OP and_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
+    | exclusive_or_expression BIT_XOR_OP and_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 and_expression
     : equality_expression                           {$$ = $1;}
-    | and_expression BIT_AND_OP equality_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
+    | and_expression BIT_AND_OP equality_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 equality_expression
     : relational_expression                             {$$ = $1;}
-    | equality_expression EQ_OP relational_expression   {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
-    | equality_expression NE_OP relational_expression   {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
+    | equality_expression EQ_OP relational_expression   {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | equality_expression NE_OP relational_expression   {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 relational_expression
     : shift_expression                              {$$ = $1;}
-    | relational_expression LT_OP shift_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
-    | relational_expression GT_OP shift_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
-    | relational_expression LE_OP shift_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
-    | relational_expression GE_OP shift_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
+    | relational_expression LT_OP shift_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | relational_expression GT_OP shift_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | relational_expression LE_OP shift_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | relational_expression GE_OP shift_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 shift_expression
     : additive_expression                           {$$ = $1;}
-    | shift_expression LEFT_OP additive_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
-    | shift_expression RIGHT_OP additive_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
+    | shift_expression LEFT_OP additive_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | shift_expression RIGHT_OP additive_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 additive_expression
     : multiplicative_expression                             {$$ = $1;}
-    | additive_expression ADD_OP multiplicative_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
-    | additive_expression SUB_OP multiplicative_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
+    | additive_expression ADD_OP multiplicative_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | additive_expression SUB_OP multiplicative_expression  {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 multiplicative_expression
     : unary_expression                                  {$$ = $1;}
-    | multiplicative_expression MUL_OP unary_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
-    | multiplicative_expression DIV_OP unary_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
-    | multiplicative_expression MOD_OP unary_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3));}
+    | multiplicative_expression MUL_OP unary_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | multiplicative_expression DIV_OP unary_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | multiplicative_expression MOD_OP unary_expression {$$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 unary_expression
@@ -260,9 +260,9 @@ unary_expression
 postfix_expression
     : primary_expression                    {$$ = $1;}
     | array_index                           {$$ = $1;}
-    | id '.' id                             {$$ = new AST_StructMember(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($3));}
-    | id '(' ')'                            {$$ = new AST_MethodCall(std::shared_ptr<AST_Identifier>($1));}
-    | id '(' argument_expression_list ')'   {$$ = new AST_MethodCall(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_ExpressionList>($3));}
+    | id '.' id                             {$$ = new AST_StructMember(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($3)); $$->col = yycol; $$->row = yyrow;}
+    | id '(' ')'                            {$$ = new AST_MethodCall(std::shared_ptr<AST_Identifier>($1)); $$->col = yycol; $$->row = yyrow;}
+    | id '(' argument_expression_list ')'   {$$ = new AST_MethodCall(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_ExpressionList>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 primary_expression
@@ -273,7 +273,7 @@ primary_expression
     ;
 
 array_index
-    : id '[' expression ']'             {$$ = new AST_ArrayIndex(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Expression>($3));}
+    : id '[' expression ']'             {$$ = new AST_ArrayIndex(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
     | array_index '[' expression ']'    {$1->expressions->push_back(std::shared_ptr<AST_Expression>($3)); $$ = $1;}
     ;
 
