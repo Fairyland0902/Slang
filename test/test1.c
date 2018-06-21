@@ -26,14 +26,15 @@ int main()
     puts("");
     printf("w = %d", w);
     puts("");
-    int i;
-    for (i = 0; i < 3; ++i)
+    int i = 0;
+    while (i < 0)
     {
         k[i] = i / 3.0;
         printf("k[i] = %lf", k[i]);
         puts("");
         printf("kk[i] = %d", kk[i]);
         puts("");
+        i++;
     }
 
     return 0;

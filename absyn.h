@@ -82,6 +82,7 @@ class AST_Statement : public AST_Node
 {
 public:
     bool isGlobal = false;
+    bool atLeastOnce = false;
 
     AST_Statement() = default;
 

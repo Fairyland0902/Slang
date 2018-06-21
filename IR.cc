@@ -14,8 +14,11 @@ extern int yynerrs;
 
 /*
  * @TODO:
- * 1. unary ops
- * 2. variable declaration list
+ * 1. Array in Struct, Array in Struct Array ...
+ * 2. Nested Struct ...
+ * 3. Pointer !!!
+ * 4. Argument's type check in Method Call ...
+ * 5. SWITCH ...
  */
 
 static Type *TypeOf(const AST_Identifier &type, CodeGenContext &context)
@@ -546,7 +549,15 @@ llvm::Value *AST_ForStatement::generateCode(CodeGenContext &context)
     if (!condValue)
         return nullptr;
 
-    condValue = CastToBoolean(context, condValue);
+    if (atLeastOnce)
+    {
+        // Always true for the first iteration.
+        condValue = context.builder.CreateICmpEQ(ConstantInt::get(Type::getInt1Ty(context.llvmContext), 0, true),
+                                                 ConstantInt::get(Type::getInt1Ty(context.llvmContext), 0, true));
+    } else
+    {
+        condValue = CastToBoolean(context, condValue);
+    }
 
     // Fall to the block.
     context.builder.CreateCondBr(condValue, block, after);

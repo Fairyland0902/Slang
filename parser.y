@@ -156,6 +156,7 @@ selection_statement
 
 iteration_statement
     : WHILE '(' expression ')' block                                {$$ = new AST_ForStatement(std::shared_ptr<AST_Block>($5), nullptr, std::shared_ptr<AST_Expression>($3), nullptr); $$->col = yycol; $$->row = yyrow;}
+    | DO block WHILE '(' expression ')'                             {$$ = new AST_ForStatement(std::shared_ptr<AST_Block>($2), nullptr, std::shared_ptr<AST_Expression>($5), nullptr); $$->atLeastOnce = true; $$->col = yycol; $$->row = yyrow;}
     | FOR '(' expression ';' expression ';' expression ')' block    {$$ = new AST_ForStatement(std::shared_ptr<AST_Block>($9), std::shared_ptr<AST_Expression>($3), std::shared_ptr<AST_Expression>($5), std::shared_ptr<AST_Expression>($7)); $$->col = yycol; $$->row = yyrow;}
     ;
 
