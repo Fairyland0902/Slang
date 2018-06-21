@@ -56,6 +56,7 @@
 
 %token<string> ALIGNAS ALIGNOF ATOMIC GENERIC NORETURN STATIC_ASSERT THREAD_LOCAL
 
+%type <token> assignment_operator
 %type <index> array_index
 %type <identifier> id primary_typename struct_typename type_specifier
 %type <expression> constant string
@@ -200,12 +201,29 @@ expression
     ;
 
 assignment_expression
-    : logical_or_expression                         {$$ = $1;}
-    | id '=' assignment_expression                  {$$ = new AST_Assignment(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
-    | array_index '=' assignment_expression         {$$ = new AST_ArrayAssignment(std::shared_ptr<AST_ArrayIndex>($1), std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
-    | id '.' id '=' assignment_expression           {auto member = std::make_shared<AST_StructMember>(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($3)); $$ = new AST_StructAssignment(member, std::shared_ptr<AST_Expression>($5)); $$->col = yycol; $$->row = yyrow;}
-    | array_index '.' id '=' assignment_expression  {auto member = std::make_shared<AST_StructMember>(std::shared_ptr<AST_Identifier>($1->arrayName), std::shared_ptr<AST_Identifier>($3), std::shared_ptr<AST_ArrayIndex>($1), true); $$ = new AST_StructAssignment(member, std::shared_ptr<AST_Expression>($5)); $$->col = yycol; $$->row = yyrow;}
+    : logical_or_expression                                         {$$ = $1;}
+    | id '=' assignment_expression                                  {$$ = new AST_Assignment(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | array_index '=' assignment_expression                         {$$ = new AST_ArrayAssignment(std::shared_ptr<AST_ArrayIndex>($1), std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | id '.' id '=' assignment_expression                           {auto member = std::make_shared<AST_StructMember>(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($3)); $$ = new AST_StructAssignment(member, std::shared_ptr<AST_Expression>($5)); $$->col = yycol; $$->row = yyrow;}
+    | array_index '.' id '=' assignment_expression                  {auto member = std::make_shared<AST_StructMember>(std::shared_ptr<AST_Identifier>($1->arrayName), std::shared_ptr<AST_Identifier>($3), std::shared_ptr<AST_ArrayIndex>($1), true); $$ = new AST_StructAssignment(member, std::shared_ptr<AST_Expression>($5)); $$->col = yycol; $$->row = yyrow;}
+    | id assignment_operator assignment_expression                  {auto expr = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$ = new AST_Assignment(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Expression>(expr)); $$->col = yycol; $$->row = yyrow;}
+    | array_index assignment_operator assignment_expression         {auto expr = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $2, std::shared_ptr<AST_Expression>($3)); $$ = new AST_ArrayAssignment(std::shared_ptr<AST_ArrayIndex>($1), std::shared_ptr<AST_Expression>(expr)); $$->col = yycol; $$->row = yyrow;}
+    | id '.' id assignment_operator assignment_expression           {auto expr = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $4, std::shared_ptr<AST_Expression>($3)); auto member = std::make_shared<AST_StructMember>(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($3)); $$ = new AST_StructAssignment(member, std::shared_ptr<AST_Expression>(expr)); $$->col = yycol; $$->row = yyrow;}
+    | array_index '.' id assignment_operator assignment_expression  {auto expr = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), $4, std::shared_ptr<AST_Expression>($3)); auto member = std::make_shared<AST_StructMember>(std::shared_ptr<AST_Identifier>($1->arrayName), std::shared_ptr<AST_Identifier>($3), std::shared_ptr<AST_ArrayIndex>($1), true); $$ = new AST_StructAssignment(member, std::shared_ptr<AST_Expression>(expr)); $$->col = yycol; $$->row = yyrow;}
     ;
+
+assignment_operator
+	: MUL_ASSIGN    {$$ = MUL_OP;}
+	| DIV_ASSIGN    {$$ = DIV_OP;}
+	| MOD_ASSIGN    {$$ = MOD_OP;}
+	| ADD_ASSIGN    {$$ = ADD_OP;}
+	| SUB_ASSIGN    {$$ = SUB_OP;}
+	| LEFT_ASSIGN   {$$ = LEFT_OP;}
+	| RIGHT_ASSIGN  {$$ = RIGHT_OP;}
+	| AND_ASSIGN    {$$ = BIT_AND_OP;}
+	| OR_ASSIGN     {$$ = BIT_OR_OP;}
+	| XOR_ASSIGN    {$$ = BIT_XOR_OP;}
+	;
 
 logical_or_expression
     : logical_and_expression                                {$$ = $1;}
@@ -266,7 +284,12 @@ multiplicative_expression
     ;
 
 unary_expression
-    : postfix_expression    {$$ = $1;}
+    : postfix_expression        {$$ = $1;}
+    | SUB_OP postfix_expression {auto zero = new AST_Integer(0); $$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>(zero), SUB_OP, std::shared_ptr<AST_Expression>($2)); $$->col = yycol; $$->row = yyrow;}
+    | '~' postfix_expression    {auto neg = new AST_Integer(0xffffffffffffffff); $$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>(neg), BIT_XOR_OP, std::shared_ptr<AST_Expression>($2)); $$->col = yycol; $$->row = yyrow;}
+    | '!' postfix_expression    {auto neg = new AST_Integer(0xffffffffffffffff); $$ = new AST_BinaryOperator(std::shared_ptr<AST_Expression>(neg), BIT_XOR_OP, std::shared_ptr<AST_Expression>($2)); $$->col = yycol; $$->row = yyrow;}
+    | INC_OP id                 {auto one = new AST_Integer(1); auto inc = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($2), ADD_OP, std::shared_ptr<AST_Expression>(one)); $$ = new AST_Assignment(std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_Expression>(inc)); $$->col = yycol; $$->row = yyrow;}
+    | DEC_OP id                 {auto one = new AST_Integer(1); auto dec = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($2), SUB_OP, std::shared_ptr<AST_Expression>(one)); $$ = new AST_Assignment(std::shared_ptr<AST_Identifier>($2), std::shared_ptr<AST_Expression>(dec)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 postfix_expression
@@ -276,6 +299,8 @@ postfix_expression
     | array_index '.' id                    {$$ = new AST_StructMember(std::shared_ptr<AST_Identifier>($1->arrayName), std::shared_ptr<AST_Identifier>($3), std::shared_ptr<AST_ArrayIndex>($1), true); $$->col = yycol; $$->row = yyrow;}
     | id '(' ')'                            {$$ = new AST_MethodCall(std::shared_ptr<AST_Identifier>($1)); $$->col = yycol; $$->row = yyrow;}
     | id '(' argument_expression_list ')'   {$$ = new AST_MethodCall(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_ExpressionList>($3)); $$->col = yycol; $$->row = yyrow;}
+    | id INC_OP                             {auto one = new AST_Integer(1); auto inc = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), ADD_OP, std::shared_ptr<AST_Expression>(one)); $$ = new AST_Assignment(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Expression>(inc)); $$->col = yycol; $$->row = yyrow;}
+    | id DEC_OP                             {auto one = new AST_Integer(1); auto dec = new AST_BinaryOperator(std::shared_ptr<AST_Expression>($1), SUB_OP, std::shared_ptr<AST_Expression>(one)); $$ = new AST_Assignment(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Expression>(dec)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 primary_expression
