@@ -12,13 +12,12 @@ struct Point
 
 double func(struct Point p);
 
-struct Point p_global;
-
-//float fuck;
+struct Point p_global[3];
 
 int main()
 {
     struct Point p;
+    struct Point p_local[3];
     int a;
     char input[32];
     p.x = 1.5;
@@ -26,9 +25,13 @@ int main()
     scanf("%s", input);
     printf("%s = %lf", input, func(p));
     puts("");
-    p_global.x = 4.3;
-    p_global.y = 5;
-    printf("p_global.x = %lf, p_global.y = %d", p_global.x, p_global.y);
+    p_global[0].x = 3.1415926;
+    p_global[0].y = 2;
+    p_local[0].x = 2.71828;
+    p_local[0].y = 1;
+    printf("p_global.x = %lf, p_global.y = %d", p_global[0].x, p_global[0].y);
+    puts("");
+    printf("p_local.x = %lf, p_local.y = %d", p_local[0].x, p_local[0].y);
     puts("");
 
     return 0;

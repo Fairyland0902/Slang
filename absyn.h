@@ -98,7 +98,7 @@ public:
     Json::Value generateJson() const override
     {
         Json::Value root;
-        root["name"] = getTypeName();
+        root["name"] = getTypeName() + DELIMINATER + (isGlobal ? "global" : "");
         return root;
     }
 };
@@ -770,46 +770,6 @@ public:
     virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
-
-class AST_StructMember : public AST_Expression
-{
-public:
-    shared_ptr<AST_Identifier> id;
-    shared_ptr<AST_Identifier> member;
-
-    AST_StructMember()
-    {}
-
-    AST_StructMember(shared_ptr<AST_Identifier> structName, shared_ptr<AST_Identifier> member)
-            : id(structName), member(member)
-    {}
-
-    std::string getTypeName() const override
-    {
-        return "AST_StructMember";
-    }
-
-    void print(std::string prefix) const override
-    {
-        std::string nextPrefix = prefix + this->PREFIX;
-        std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
-        id->print(nextPrefix);
-        member->print(nextPrefix);
-    }
-
-    Json::Value generateJson() const override
-    {
-        Json::Value root;
-        root["name"] = getTypeName();
-        root["children"].append(id->generateJson());
-        root["children"].append(member->generateJson());
-        return root;
-    }
-
-    virtual llvm::Value *generateCode(CodeGenContext &context) override;
-
-};
-
 class AST_ArrayIndex : public AST_Expression
 {
 public:
@@ -824,7 +784,6 @@ public:
     {
         expressions->push_back(exp);
     }
-
 
     AST_ArrayIndex(shared_ptr<AST_Identifier> name, shared_ptr<AST_ExpressionList> list)
             : arrayName(name), expressions(list)
@@ -905,7 +864,6 @@ public:
 class AST_ArrayInitialization : public AST_Statement
 {
 public:
-
     AST_ArrayInitialization()
     {}
 
@@ -948,7 +906,55 @@ public:
     }
 
     llvm::Value *generateCode(CodeGenContext &context) override;
+};
 
+class AST_StructMember : public AST_Expression
+{
+public:
+    shared_ptr<AST_Identifier> id;
+    shared_ptr<AST_Identifier> member;
+    shared_ptr<AST_ArrayIndex> array;
+    bool isArray;
+
+    AST_StructMember()
+    {}
+
+    AST_StructMember(shared_ptr<AST_Identifier> structName, shared_ptr<AST_Identifier> member,
+                     shared_ptr<AST_ArrayIndex> array = nullptr, bool isArray = false)
+            : id(structName), member(member), array(array), isArray(isArray)
+    {}
+
+    std::string getTypeName() const override
+    {
+        return "AST_StructMember";
+    }
+
+    void print(std::string prefix) const override
+    {
+        std::string nextPrefix = prefix + this->PREFIX;
+        std::cout << prefix << getTypeName() << DELIMINATER << std::endl;
+        id->print(nextPrefix);
+        member->print(nextPrefix);
+        if (isArray)
+        {
+            array->print(nextPrefix);
+        }
+    }
+
+    Json::Value generateJson() const override
+    {
+        Json::Value root;
+        root["name"] = getTypeName();
+        root["children"].append(id->generateJson());
+        root["children"].append(member->generateJson());
+        if (isArray)
+        {
+            root["children"].append(array->generateJson());
+        }
+        return root;
+    }
+
+    virtual llvm::Value *generateCode(CodeGenContext &context) override;
 };
 
 class AST_StructAssignment : public AST_Expression
@@ -987,7 +993,6 @@ public:
     }
 
     llvm::Value *generateCode(CodeGenContext &context) override;
-
 };
 
 class AST_Literal : public AST_Expression

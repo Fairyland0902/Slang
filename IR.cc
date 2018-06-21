@@ -560,65 +560,6 @@ llvm::Value *AST_ForStatement::generateCode(CodeGenContext &context)
     return nullptr;
 }
 
-llvm::Value *AST_StructMember::generateCode(CodeGenContext &context)
-{
-#ifdef IR_DEBUG
-    std::cout << "Generating struct member expression of " << this->id->name << "." << this->member->name << std::endl;
-#endif
-    auto varPtr = context.getSymbolValue(this->id->name);
-    auto structPtr = context.builder.CreateLoad(varPtr, "structPtr");
-    structPtr->setAlignment(4);
-
-    if (!structPtr->getType()->isStructTy())
-    {
-        return LogErrorV(this->id->row, this->id->col,
-                         "member reference base type '" + (this->id->name) + "' is not a structure or union");
-    }
-
-    string structName = structPtr->getType()->getStructName().str();
-    long memberIndex = context.typeSystem.getStructMemberIndex(structName, this->member->name, this->member->row,
-                                                               this->member->col);
-
-    std::vector<Value *> indices;
-    indices.push_back(ConstantInt::get(context.typeSystem.intTy, 0, false));
-    indices.push_back(ConstantInt::get(context.typeSystem.intTy, (uint64_t) memberIndex, false));
-    auto ptr = context.builder.CreateInBoundsGEP(varPtr, indices, "memberPtr");
-
-    return context.builder.CreateLoad(ptr);
-}
-
-llvm::Value *AST_StructAssignment::generateCode(CodeGenContext &context)
-{
-#ifdef IR_DEBUG
-    std::cout << "Generating struct assignment of " << this->structMember->id->name << "."
-              << this->structMember->member->name << std::endl;
-#endif
-    auto varPtr = context.getSymbolValue(this->structMember->id->name);
-    auto structPtr = context.builder.CreateLoad(varPtr, "structPtr");
-    structPtr->setAlignment(4);
-
-    if (!structPtr->getType()->isStructTy())
-    {
-        return LogErrorV(this->structMember->id->row, this->structMember->id->col,
-                         "member reference base type '" + (this->structMember->id->name) +
-                         "' is not a structure or union");
-    }
-
-    string structName = structPtr->getType()->getStructName().str();
-    long memberIndex = context.typeSystem.getStructMemberIndex(structName, this->structMember->member->name,
-                                                               this->structMember->member->row,
-                                                               this->structMember->member->col);
-
-    std::vector<Value *> indices;
-    auto value = this->expression->generateCode(context);
-    indices.push_back(ConstantInt::get(context.typeSystem.intTy, 0, false));
-    indices.push_back(ConstantInt::get(context.typeSystem.intTy, (uint64_t) memberIndex, false));
-
-    auto ptr = context.builder.CreateInBoundsGEP(varPtr, indices, "structMemberPtr");
-
-    return context.builder.CreateStore(value, ptr);
-}
-
 llvm::Value *AST_ArrayIndex::generateCode(CodeGenContext &context)
 {
 #ifdef IR_DEBUG
@@ -634,13 +575,17 @@ llvm::Value *AST_ArrayIndex::generateCode(CodeGenContext &context)
     std::vector<Value *> indices;
     if (context.isFuncArg(this->arrayName->name))
     {
-        std::cout << "isFuncArg" << std::endl;
+#ifdef IR_DEBUG
+        std::cout << " is function argument" << std::endl;
+#endif
         varPtr = context.builder.CreateLoad(varPtr, "actualArrayPtr");
         indices = {value};
         indices = ArrayRef<Value *>(value);
     } else if (varPtr->getType()->isPointerTy())
     {
-        std::cout << this->arrayName->name << "Not isFuncArg" << std::endl;
+#ifdef IR_DEBUG
+        std::cout << this->arrayName->name << " is not function argument" << std::endl;
+#endif
         indices = {ConstantInt::get(Type::getInt64Ty(context.llvmContext), 0), value};
     } else
     {
@@ -702,6 +647,87 @@ llvm::Value *AST_ArrayInitialization::generateCode(CodeGenContext &context)
         assignment.generateCode(context);
     }
     return nullptr;
+}
+
+llvm::Value *AST_StructMember::generateCode(CodeGenContext &context)
+{
+#ifdef IR_DEBUG
+    std::cout << "Generating struct member expression of " << this->id->name << "." << this->member->name << std::endl;
+#endif
+    auto varPtr = context.getSymbolValue(this->id->name);
+    Value *structPtr;
+    if (isArray)
+    {
+        // Get struct pointer from array.
+        structPtr = array->generateCode(context);
+    } else
+    {
+        // Create struct pointer and do not forget to set alignment.
+        LoadInst *inst;
+        inst = context.builder.CreateLoad(varPtr, "structPtr");
+        inst->setAlignment(4);
+        structPtr = static_cast<Value *>(inst);
+    }
+
+    if (!structPtr->getType()->isStructTy())
+    {
+        return LogErrorV(this->id->row, this->id->col,
+                         "member reference base type '" + (this->id->name) + "' is not a structure or union");
+    }
+
+    string structName = structPtr->getType()->getStructName().str();
+    long memberIndex = context.typeSystem.getStructMemberIndex(structName, this->member->name, this->member->row,
+                                                               this->member->col);
+
+    std::vector<Value *> indices;
+    indices.push_back(ConstantInt::get(context.typeSystem.intTy, 0, false));
+    indices.push_back(ConstantInt::get(context.typeSystem.intTy, (uint64_t) memberIndex, false));
+    auto ptr = context.builder.CreateInBoundsGEP(varPtr, indices, "memberPtr");
+
+    return context.builder.CreateLoad(ptr);
+}
+
+llvm::Value *AST_StructAssignment::generateCode(CodeGenContext &context)
+{
+#ifdef IR_DEBUG
+    std::cout << "Generating struct assignment of " << this->structMember->id->name << "."
+              << this->structMember->member->name << std::endl;
+#endif
+    auto varPtr = context.getSymbolValue(this->structMember->id->name);
+    Value *structPtr;
+    if (this->structMember->isArray)
+    {
+        // Get struct pointer from array.
+        structPtr = this->structMember->array->generateCode(context);
+    } else
+    {
+        // Create struct pointer and do not forget to set alignment.
+        LoadInst *inst;
+        inst = context.builder.CreateLoad(varPtr, "structPtr");
+        inst->setAlignment(4);
+        structPtr = static_cast<Value *>(inst);
+    }
+
+    if (!structPtr->getType()->isStructTy())
+    {
+        return LogErrorV(this->structMember->id->row, this->structMember->id->col,
+                         "member reference base type '" + (this->structMember->id->name) +
+                         "' is not a structure or union");
+    }
+
+    string structName = structPtr->getType()->getStructName().str();
+    long memberIndex = context.typeSystem.getStructMemberIndex(structName, this->structMember->member->name,
+                                                               this->structMember->member->row,
+                                                               this->structMember->member->col);
+
+    std::vector<Value *> indices;
+    auto value = this->expression->generateCode(context);
+    indices.push_back(ConstantInt::get(context.typeSystem.intTy, 0, false));
+    indices.push_back(ConstantInt::get(context.typeSystem.intTy, (uint64_t) memberIndex, false));
+
+    auto ptr = context.builder.CreateInBoundsGEP(varPtr, indices, "structMemberPtr");
+
+    return context.builder.CreateStore(value, ptr);
 }
 
 llvm::Value *AST_Literal::generateCode(CodeGenContext &context)

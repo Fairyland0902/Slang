@@ -200,10 +200,11 @@ expression
     ;
 
 assignment_expression
-    : logical_or_expression                 {$$ = $1;}
-    | id '=' assignment_expression          {$$ = new AST_Assignment(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
-    | array_index '=' assignment_expression {$$ = new AST_ArrayAssignment(std::shared_ptr<AST_ArrayIndex>($1), std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
-    | id '.' id '=' assignment_expression   {auto member = std::make_shared<AST_StructMember>(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($3)); $$ = new AST_StructAssignment(member, std::shared_ptr<AST_Expression>($5)); $$->col = yycol; $$->row = yyrow;}
+    : logical_or_expression                         {$$ = $1;}
+    | id '=' assignment_expression                  {$$ = new AST_Assignment(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | array_index '=' assignment_expression         {$$ = new AST_ArrayAssignment(std::shared_ptr<AST_ArrayIndex>($1), std::shared_ptr<AST_Expression>($3)); $$->col = yycol; $$->row = yyrow;}
+    | id '.' id '=' assignment_expression           {auto member = std::make_shared<AST_StructMember>(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($3)); $$ = new AST_StructAssignment(member, std::shared_ptr<AST_Expression>($5)); $$->col = yycol; $$->row = yyrow;}
+    | array_index '.' id '=' assignment_expression  {auto member = std::make_shared<AST_StructMember>(std::shared_ptr<AST_Identifier>($1->arrayName), std::shared_ptr<AST_Identifier>($3), std::shared_ptr<AST_ArrayIndex>($1), true); $$ = new AST_StructAssignment(member, std::shared_ptr<AST_Expression>($5)); $$->col = yycol; $$->row = yyrow;}
     ;
 
 logical_or_expression
@@ -272,6 +273,7 @@ postfix_expression
     : primary_expression                    {$$ = $1;}
     | array_index                           {$$ = $1;}
     | id '.' id                             {$$ = new AST_StructMember(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_Identifier>($3)); $$->col = yycol; $$->row = yyrow;}
+    | array_index '.' id                    {$$ = new AST_StructMember(std::shared_ptr<AST_Identifier>($1->arrayName), std::shared_ptr<AST_Identifier>($3), std::shared_ptr<AST_ArrayIndex>($1), true); $$->col = yycol; $$->row = yyrow;}
     | id '(' ')'                            {$$ = new AST_MethodCall(std::shared_ptr<AST_Identifier>($1)); $$->col = yycol; $$->row = yyrow;}
     | id '(' argument_expression_list ')'   {$$ = new AST_MethodCall(std::shared_ptr<AST_Identifier>($1), std::shared_ptr<AST_ExpressionList>($3)); $$->col = yycol; $$->row = yyrow;}
     ;
