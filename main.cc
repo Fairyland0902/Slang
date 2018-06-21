@@ -152,7 +152,6 @@ int main(int argc, char **argv)
         }
     } else
     {
-        // Compile from an input file.
         fprintf(stderr, "slang:\033[1;31m error:\033[0m no input files\n");
         exit(EXIT_FAILURE);
     }

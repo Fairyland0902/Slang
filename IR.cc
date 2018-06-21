@@ -43,16 +43,29 @@ static llvm::Value *calcArrayIndex(shared_ptr<AST_ArrayIndex> index, CodeGenCont
 {
     auto sizeVec = context.getArraySize(index->arrayName->name);
 #ifdef IR_DEBUG
-    std::cout << "sizeVec:" << sizeVec.size() << ", expressions: " << index->expressions->size() << std::endl;
+    std::cout << "dimension: " << sizeVec.size() << ", expressions: " << index->expressions->size() << std::endl;
 #endif
-    assert(sizeVec.size() > 0 && sizeVec.size() == index->expressions->size());
+    assert(sizeVec.size() > 0);
+    // Calculate array size.
+    std::vector<uint64_t> dimensions;
+    for (size_t i = 0; i < sizeVec.size(); i++)
+    {
+        shared_ptr<AST_Integer> indexValue = make_shared<AST_Integer>(sizeVec[i]);
+        dimensions.push_back(indexValue->value);
+#ifdef IR_DEBUG
+        std::cout << "dimension[" << i << "] = " << indexValue->value << std::endl;
+#endif
+    }
+
     auto expression = *(index->expressions->rbegin());
+    uint64_t dimension = dimensions.back();
 
     for (size_t i = sizeVec.size() - 1; i >= 1; i--)
     {
-        auto temp = make_shared<AST_BinaryOperator>(make_shared<AST_Integer>(sizeVec[i]), MUL_OP,
+        auto temp = make_shared<AST_BinaryOperator>(make_shared<AST_Integer>(dimension), MUL_OP,
                                                     index->expressions->at(i - 1));
         expression = make_shared<AST_BinaryOperator>(temp, ADD_OP, expression);
+        dimension *= dimensions[i - 1];
     }
 
     return expression->generateCode(context);
@@ -116,7 +129,7 @@ llvm::Value *AST_Assignment::generateCode(CodeGenContext &context)
 llvm::Value *AST_BinaryOperator::generateCode(CodeGenContext &context)
 {
 #ifdef IR_DEBUG
-    std::cout << "Generating binary operator" << std::endl;
+    std::cout << "Generating binary operator: " << this->op << std::endl;
 #endif
     Value *L = this->lhs->generateCode(context);
     Value *R = this->rhs->generateCode(context);
@@ -635,15 +648,46 @@ llvm::Value *AST_ArrayInitialization::generateCode(CodeGenContext &context)
     }
     auto arrayPtr = this->declaration->generateCode(context);
     auto sizeVec = context.getArraySize(this->declaration->id->name);
-    // @TODO: multi-dimension array initialization
-    assert(sizeVec.size() == 1);
 
-    for (size_t index = 0; index < this->expressionList->size(); index++)
+    // Calculate array size.
+    std::vector<uint64_t> dimensions;
+    for (size_t i = 0; i < sizeVec.size(); i++)
     {
-        shared_ptr<AST_Integer> indexValue = make_shared<AST_Integer>(index);
+        shared_ptr<AST_Integer> indexValue = make_shared<AST_Integer>(sizeVec[i]);
+        dimensions.push_back(indexValue->value);
+#ifdef IR_DEBUG
+        std::cout << "dimension[" << i << "] = " << indexValue->value << std::endl;
+#endif
+    }
+#ifdef IR_DEBUG
+    std::cout << "Expression List Size = " << expressionList->size() << std::endl;
+#endif
+    for (size_t i = 0; i < this->expressionList->size(); i++)
+    {
+        AST_ExpressionList exprs;
+        exprs.resize(dimensions.size());
+        for (size_t j = 0; j < dimensions.size() - 1; j++)
+        {
+            uint64_t value = 1;
+            for (size_t k = j + 1; k < dimensions.size(); k++)
+            {
+                value *= dimensions[k];
+            }
+#ifdef IR_DEBUG
+            std::cout << (i / value) % dimensions[j] << " ";
+#endif
+            shared_ptr<AST_Integer> indexValue = make_shared<AST_Integer>((i / value) % dimensions[j]);
+            exprs[j] = indexValue;
+        }
+#ifdef IR_DEBUG
+        std::cout << i % dimensions.back() << std::endl;
+#endif
+        shared_ptr<AST_Integer> indexValue = make_shared<AST_Integer>(i % dimensions.back());
+        exprs.back() = indexValue;
 
-        shared_ptr<AST_ArrayIndex> arrayIndex = make_shared<AST_ArrayIndex>(this->declaration->id, indexValue);
-        AST_ArrayAssignment assignment(arrayIndex, this->expressionList->at(index));
+        shared_ptr<AST_ArrayIndex> arrayIndex = make_shared<AST_ArrayIndex>(this->declaration->id,
+                                                                            make_shared<AST_ExpressionList>(exprs));
+        AST_ArrayAssignment assignment(arrayIndex, this->expressionList->at(i));
         assignment.generateCode(context);
     }
     return nullptr;
