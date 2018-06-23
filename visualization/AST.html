@@ -28,7 +28,7 @@
     </style>
   </head>
   <body>
-    <div id="body" style="overflow:scroll; height:750px;">
+    <div id="body" style="overflow:scroll; height:750px; width:1600px;">
       <div id="footer">
         ASTree
         <div class="hint">click or option-click to expand or collapse</div>
@@ -37,7 +37,7 @@
     <script type="text/javascript">
 
 		var m = [20, 120, 20, 120],
-		    w = 1280 - m[1] - m[3],
+		    w = 600 + 1280 - m[1] - m[3],
 		    h = 800 - m[0] - m[2],
 		    i = 0,
 		    root;
@@ -49,7 +49,7 @@
 		    .projection(function(d) { return [d.y, d.x]; });
 
 		var vis = d3.select("#body").append("svg:svg")
-		    .attr("width", w + m[1] + m[3])
+		    .attr("width", w + m[1] + m[3] + 1000)
 		    .attr("height", h + m[0] + m[2])
 		  .append("svg:g")
 		    .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
