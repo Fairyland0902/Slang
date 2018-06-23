@@ -480,9 +480,6 @@
 								},
 								{
 									"name" : "AST_Identifier:i"
-								},
-								{
-									"name" : "AST_Integer:0"
 								}
 							],
 							"name" : "AST_VariableDeclaration"
@@ -500,7 +497,40 @@
 											"name" : "AST_Integer:0"
 										}
 									],
+									"name" : "AST_Assignment"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "AST_Identifier:i"
+										},
+										{
+											"name" : "AST_Integer:3"
+										}
+									],
 									"name" : "AST_BinaryOperator:287"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "AST_Identifier:i"
+										},
+										{
+											"children" : 
+											[
+												{
+													"name" : "AST_Identifier:i"
+												},
+												{
+													"name" : "AST_Integer:1"
+												}
+											],
+											"name" : "AST_BinaryOperator:279"
+										}
+									],
+									"name" : "AST_Assignment"
 								},
 								{
 									"children" : 
@@ -633,33 +663,6 @@
 														}
 													],
 													"name" : "AST_MethodCall"
-												}
-											],
-											"name" : "AST_ExpressionStatement"
-										},
-										{
-											"children" : 
-											[
-												{
-													"children" : 
-													[
-														{
-															"name" : "AST_Identifier:i"
-														},
-														{
-															"children" : 
-															[
-																{
-																	"name" : "AST_Identifier:i"
-																},
-																{
-																	"name" : "AST_Integer:1"
-																}
-															],
-															"name" : "AST_BinaryOperator:279"
-														}
-													],
-													"name" : "AST_Assignment"
 												}
 											],
 											"name" : "AST_ExpressionStatement"
